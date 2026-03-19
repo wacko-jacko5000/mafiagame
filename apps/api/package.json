@@ -26,7 +26,7 @@
     "build": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx watch src/main.ts",
     "lint": "node -e \"console.log('lint not yet wired')\"",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "pnpm exec prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "start": "tsx src/main.ts",
