@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id                String    @id @default(uuid()) @db.Uuid
+  accountId         String?   @unique @db.Uuid
+  displayName       String    @unique @db.VarChar(24)
+  cash              Int
+  respect           Int
+  energy            Int
+  energyUpdatedAt   DateTime  @default(now())
+  health            Int
+  jailedUntil       DateTime?
+  hospitalizedUntil DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  account           Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  inventoryItems    PlayerInventoryItem[]
+  createdGangs      Gang[]    @relation("GangCreator")
+  gangMemberships   GangMember[]
+  receivedGangInvites GangInvite[] @relation("GangInviteRecipient")
+  sentGangInvites     GangInvite[] @relation("GangInviteSender")
+  startedDistrictWars DistrictWar[] @relation("DistrictWarStarter")
+  activeMarketListings MarketListing[] @relation("MarketListingSeller")
+  purchasedMarketListings MarketListing[] @relation("MarketListingBuyer")
+  missions          PlayerMission[]
+  achievements      PlayerAchievement[]
+  activities        PlayerActivity[]
+
+  @@index([accountId])
+  @@map("players")
+}
+
+model Account {
+  id           String           @id @default(uuid()) @db.Uuid
+  email        String           @unique @db.VarChar(320)
+  passwordHash String           @db.VarChar(255)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  player       Player?
+  sessions     AccountSession[]
+  balanceChanges BalanceChangeLog[]
+
+  @@map("accounts")
+}
+
+model AccountSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  accountId String   @db.Uuid
+  tokenHash String   @unique @db.VarChar(64)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([expiresAt])
+  @@map("account_sessions")
+}
+
+enum GangRole {
+  leader
+  member
+}
+
+enum GangInviteStatus {
+  pending
+  accepted
+  declined
+}
+
+model Gang {
+  id                String       @id @default(uuid()) @db.Uuid
+  name              String       @unique @db.VarChar(24)
+  createdAt         DateTime     @default(now())
+  createdByPlayerId String       @db.Uuid
+  createdByPlayer   Player       @relation("GangCreator", fields: [createdByPlayerId], references: [id], onDelete: Restrict)
+  members           GangMember[]
+  controlledDistricts DistrictControl[]
+  invites           GangInvite[]
+  attackingDistrictWars DistrictWar[] @relation("DistrictWarAttacker")
+  defendingDistrictWars DistrictWar[] @relation("DistrictWarDefender")
+  wonDistrictWars       DistrictWar[] @relation("DistrictWarWinner")
+
+  @@index([createdByPlayerId])
+  @@map("gangs")
+}
+
+model GangMember {
+  id       String   @id @default(uuid()) @db.Uuid
+  gangId   String   @db.Uuid
+  playerId String   @unique @db.Uuid
+  role     GangRole
+  joinedAt DateTime @default(now())
+  gang     Gang     @relation(fields: [gangId], references: [id], onDelete: Cascade)
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([gangId])
+  @@map("gang_members")
+}
+
+model GangInvite {
+  id                String           @id @default(uuid()) @db.Uuid
+  gangId            String           @db.Uuid
+  invitedPlayerId   String           @db.Uuid
+  invitedByPlayerId String           @db.Uuid
+  status            GangInviteStatus
+  createdAt         DateTime         @default(now())
+  gang              Gang             @relation(fields: [gangId], references: [id], onDelete: Cascade)
+  invitedPlayer     Player           @relation("GangInviteRecipient", fields: [invitedPlayerId], references: [id], onDelete: Cascade)
+  invitedByPlayer   Player           @relation("GangInviteSender", fields: [invitedByPlayerId], references: [id], onDelete: Restrict)
+
+  @@index([gangId])
+  @@index([invitedPlayerId])
+  @@index([status])
+  @@map("gang_invites")
+}
+
+model District {
+  id                    String           @id @default(uuid()) @db.Uuid
+  name                  String           @unique @db.VarChar(32)
+  payoutAmount          Int              @default(1000)
+  payoutCooldownMinutes Int              @default(60)
+  createdAt             DateTime         @default(now())
+  control               DistrictControl?
+  wars                  DistrictWar[]
+
+  @@map("districts")
+}
+
+model DistrictControl {
+  id                  String   @id @default(uuid()) @db.Uuid
+  districtId          String   @unique @db.Uuid
+  gangId              String   @db.Uuid
+  capturedAt          DateTime @default(now())
+  lastPayoutClaimedAt DateTime?
+  district            District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  gang                Gang     @relation(fields: [gangId], references: [id], onDelete: Restrict)
+
+  @@index([gangId])
+  @@map("district_controls")
+}
+
+enum DistrictWarStatus {
+  pending
+  resolved
+}
+
+model DistrictWar {
+  id              String            @id @default(uuid()) @db.Uuid
+  districtId      String            @db.Uuid
+  attackerGangId  String            @db.Uuid
+  defenderGangId  String            @db.Uuid
+  startedByPlayerId String          @db.Uuid
+  status          DistrictWarStatus
+  createdAt       DateTime          @default(now())
+  resolvedAt      DateTime?
+  winningGangId   String?           @db.Uuid
+  district        District          @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  attackerGang    Gang              @relation("DistrictWarAttacker", fields: [attackerGangId], references: [id], onDelete: Restrict)
+  defenderGang    Gang              @relation("DistrictWarDefender", fields: [defenderGangId], references: [id], onDelete: Restrict)
+  startedByPlayer Player            @relation("DistrictWarStarter", fields: [startedByPlayerId], references: [id], onDelete: Restrict)
+  winningGang     Gang?             @relation("DistrictWarWinner", fields: [winningGangId], references: [id], onDelete: Restrict)
+
+  @@index([districtId, status])
+  @@index([attackerGangId])
+  @@index([defenderGangId])
+  @@index([winningGangId])
+  @@map("district_wars")
+}
+
+model PlayerInventoryItem {
+  id              String         @id @default(uuid()) @db.Uuid
+  playerId        String         @db.Uuid
+  itemId          String         @db.VarChar(64)
+  equippedSlot    String?        @db.VarChar(16)
+  marketListingId String?        @unique @db.Uuid
+  acquiredAt      DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  player          Player         @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  listing         MarketListing? @relation("MarketListingInventoryItem")
+
+  @@index([playerId])
+  @@unique([playerId, equippedSlot])
+  @@map("player_inventory_items")
+}
+
+enum MarketListingStatus {
+  active
+  sold
+  cancelled
+}
+
+enum PlayerMissionStatus {
+  active
+  completed
+}
+
+enum SeasonStatus {
+  draft
+  active
+  inactive
+}
+
+model MarketListing {
+  id              String              @id @default(uuid()) @db.Uuid
+  inventoryItemId String              @unique @db.Uuid
+  sellerPlayerId  String              @db.Uuid
+  price           Int
+  status          MarketListingStatus
+  createdAt       DateTime            @default(now())
+  soldAt          DateTime?
+  buyerPlayerId   String?             @db.Uuid
+  inventoryItem   PlayerInventoryItem @relation("MarketListingInventoryItem", fields: [inventoryItemId], references: [id], onDelete: Restrict)
+  sellerPlayer    Player              @relation("MarketListingSeller", fields: [sellerPlayerId], references: [id], onDelete: Restrict)
+  buyerPlayer     Player?             @relation("MarketListingBuyer", fields: [buyerPlayerId], references: [id], onDelete: Restrict)
+
+  @@index([sellerPlayerId, status])
+  @@index([status, createdAt])
+  @@index([buyerPlayerId])
+  @@map("market_listings")
+}
+
+model PlayerMission {
+  id             String              @id @default(uuid()) @db.Uuid
+  playerId       String              @db.Uuid
+  missionId      String              @db.VarChar(64)
+  status         PlayerMissionStatus
+  progress       Int
+  targetProgress Int
+  acceptedAt     DateTime
+  completedAt    DateTime?
+  player         Player              @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, missionId])
+  @@index([playerId, status])
+  @@map("player_missions")
+}
+
+model PlayerAchievement {
+  id             String   @id @default(uuid()) @db.Uuid
+  playerId       String   @db.Uuid
+  achievementId  String   @db.VarChar(64)
+  progress       Int
+  targetProgress Int
+  unlockedAt     DateTime?
+  player         Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, achievementId])
+  @@index([playerId])
+  @@map("player_achievements")
+}
+
+model PlayerActivity {
+  id        String   @id @default(uuid()) @db.Uuid
+  playerId  String   @db.Uuid
+  type      String   @db.VarChar(64)
+  title     String   @db.VarChar(120)
+  body      String   @db.VarChar(280)
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@map("player_activities")
+}
+
+model CrimeBalance {
+  crimeId        String   @id @db.VarChar(64)
+  energyCost     Int
+  successRate    Float
+  cashRewardMin  Int
+  cashRewardMax  Int
+  respectReward  Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("crime_balances")
+}
+
+model ShopItemBalance {
+  itemId     String   @id @db.VarChar(64)
+  price      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("shop_item_balances")
+}
+
+model BalanceChangeLog {
+  id                 String    @id @default(uuid()) @db.Uuid
+  section            String    @db.VarChar(32)
+  targetId           String    @db.VarChar(64)
+  changedByAccountId String?   @db.Uuid
+  previousValue      Json
+  newValue           Json
+  changedAt          DateTime  @default(now())
+  changedByAccount   Account?  @relation(fields: [changedByAccountId], references: [id], onDelete: SetNull)
+
+  @@index([section, changedAt])
+  @@index([targetId, changedAt])
+  @@index([changedByAccountId])
+  @@map("balance_change_logs")
+}
+
+model Season {
+  id             String       @id @default(uuid()) @db.Uuid
+  name           String       @db.VarChar(64)
+  status         SeasonStatus
+  startsAt       DateTime?
+  endsAt         DateTime?
+  activatedAt    DateTime?
+  deactivatedAt  DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([status, createdAt])
+  @@map("seasons")
+}

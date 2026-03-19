@@ -1,0 +1,28 @@
+# Gangs API
+
+- `POST /gangs`
+  - request: `{ "playerId": string, "name": string }`
+  - response: `{ id, name, createdAt, createdByPlayerId, memberCount }`
+- `POST /gangs/:gangId/join`
+  - request: `{ "playerId": string }`
+  - response: `{ id, gangId, playerId, displayName, role, joinedAt }`
+- `POST /gangs/:gangId/leave`
+  - request: `{ "playerId": string }`
+  - response: `{ gangId, playerId, role, gangDeleted }`
+- `POST /gangs/:gangId/invite/:playerId`
+  - request: `{ "invitedByPlayerId": string }`
+  - response: `{ id, gangId, gangName, invitedPlayerId, invitedPlayerDisplayName, invitedByPlayerId, invitedByPlayerDisplayName, status, createdAt }`
+- `GET /gangs/:gangId`
+  - response: `{ id, name, createdAt, createdByPlayerId, memberCount }`
+- `GET /gangs/:gangId/members`
+  - response: list of `{ id, gangId, playerId, displayName, role, joinedAt }`
+- `GET /gangs/:gangId/invites`
+  - response: list of invite rows with current status
+- `POST /gang-invites/:inviteId/accept`
+  - request: `{ "playerId": string }`
+  - response: `{ inviteId, status, membership }`
+- `POST /gang-invites/:inviteId/decline`
+  - request: `{ "playerId": string }`
+  - response: `{ inviteId, status, membership }`
+- `GET /players/:playerId/gang-invites`
+  - response: list of invite rows with current status

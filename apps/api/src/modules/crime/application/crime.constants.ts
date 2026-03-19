@@ -1,0 +1,1 @@
+export const CRIME_RANDOM_PROVIDER = Symbol("CRIME_RANDOM_PROVIDER");

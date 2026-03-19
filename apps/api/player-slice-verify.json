@@ -1,0 +1,28 @@
+{
+    "created":  {
+                    "id":  "d32f3192-4c8d-4e7c-9bc9-1ca90401bbe0",
+                    "displayName":  "Playerf4f7ffc2",
+                    "cash":  2500,
+                    "respect":  0,
+                    "energy":  100,
+                    "health":  100,
+                    "createdAt":  "2026-03-16T20:21:29.307Z",
+                    "updatedAt":  "2026-03-16T20:21:29.307Z"
+                },
+    "player":  {
+                   "id":  "d32f3192-4c8d-4e7c-9bc9-1ca90401bbe0",
+                   "displayName":  "Playerf4f7ffc2",
+                   "cash":  2500,
+                   "respect":  0,
+                   "energy":  100,
+                   "health":  100,
+                   "createdAt":  "2026-03-16T20:21:29.307Z",
+                   "updatedAt":  "2026-03-16T20:21:29.307Z"
+               },
+    "resources":  {
+                      "cash":  2500,
+                      "respect":  0,
+                      "energy":  100,
+                      "health":  100
+                  }
+}

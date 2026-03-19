@@ -1,0 +1,61 @@
+{
+    "created":  {
+                    "id":  "5f1e2f57-c4fc-4bd0-bd48-d2bda2263a9b",
+                    "displayName":  "CrimePlayer5b3247",
+                    "cash":  2500,
+                    "respect":  0,
+                    "energy":  100,
+                    "health":  100,
+                    "createdAt":  "2026-03-16T20:34:52.903Z",
+                    "updatedAt":  "2026-03-16T20:34:52.903Z"
+                },
+    "crimes":  {
+                   "value":  [
+                                 {
+                                     "id":  "pickpocket",
+                                     "name":  "Pickpocket",
+                                     "energyCost":  10,
+                                     "successRate":  0.75,
+                                     "cashRewardMin":  120,
+                                     "cashRewardMax":  220,
+                                     "respectReward":  1
+                                 },
+                                 {
+                                     "id":  "shoplift",
+                                     "name":  "Shoplift",
+                                     "energyCost":  14,
+                                     "successRate":  0.62,
+                                     "cashRewardMin":  200,
+                                     "cashRewardMax":  340,
+                                     "respectReward":  2
+                                 },
+                                 {
+                                     "id":  "steal-bike",
+                                     "name":  "Steal Bike",
+                                     "energyCost":  20,
+                                     "successRate":  0.48,
+                                     "cashRewardMin":  350,
+                                     "cashRewardMax":  520,
+                                     "respectReward":  3
+                                 }
+                             ],
+                   "Count":  3
+               },
+    "execution":  {
+                      "crimeId":  "pickpocket",
+                      "success":  true,
+                      "energySpent":  10,
+                      "cashAwarded":  129,
+                      "respectAwarded":  1
+                  },
+    "playerAfter":  {
+                        "id":  "5f1e2f57-c4fc-4bd0-bd48-d2bda2263a9b",
+                        "displayName":  "CrimePlayer5b3247",
+                        "cash":  2629,
+                        "respect":  1,
+                        "energy":  90,
+                        "health":  100,
+                        "createdAt":  "2026-03-16T20:34:52.903Z",
+                        "updatedAt":  "2026-03-16T20:34:52.997Z"
+                    }
+}

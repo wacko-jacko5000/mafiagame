@@ -1,0 +1,20 @@
+export const backendModulePaths = [
+  "auth",
+  "player",
+  "stats",
+  "crime",
+  "jail",
+  "hospital",
+  "combat",
+  "inventory",
+  "economy",
+  "businesses",
+  "gangs",
+  "territory",
+  "missions",
+  "market",
+  "notifications",
+  "live-events",
+  "leaderboard",
+  "admin-tools"
+] as const;
