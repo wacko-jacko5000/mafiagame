@@ -7,6 +7,7 @@ import { GangsService } from "../application/gangs.service";
 import {
   GangInvitesController,
   GangsController,
+  PlayerGangMembershipController,
   PlayerGangInvitesController
 } from "./gangs.controller";
 
@@ -20,6 +21,7 @@ describe("GangsController", () => {
     invitePlayer: vi.fn(),
     joinGang: vi.fn(),
     leaveGang: vi.fn(),
+    getPlayerGangMembership: vi.fn(),
     listGangInvites: vi.fn(),
     listGangMembers: vi.fn(),
     listPlayerGangInvites: vi.fn()
@@ -27,7 +29,12 @@ describe("GangsController", () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [GangsController, GangInvitesController, PlayerGangInvitesController],
+      controllers: [
+        GangsController,
+        GangInvitesController,
+        PlayerGangInvitesController,
+        PlayerGangMembershipController
+      ],
       providers: [
         {
           provide: GangsService,
@@ -288,5 +295,49 @@ describe("GangsController", () => {
       .expect(200);
 
     expect(response.body[0].invitedPlayerId).toBe(playerId);
+  });
+
+  it("gets the current player gang membership", async () => {
+    const playerId = crypto.randomUUID();
+    const gangId = crypto.randomUUID();
+    vi.mocked(gangsService.getPlayerGangMembership).mockResolvedValueOnce({
+      membership: {
+        id: crypto.randomUUID(),
+        gangId,
+        playerId,
+        displayName: "Nina Vale",
+        role: "leader",
+        joinedAt: new Date("2026-03-17T00:25:00.000Z")
+      },
+      gang: {
+        id: gangId,
+        name: "Night Owls",
+        createdAt: new Date("2026-03-16T22:00:00.000Z"),
+        createdByPlayerId: playerId,
+        memberCount: 3
+      }
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`/players/${playerId}/gang-membership`)
+      .expect(200);
+
+    expect(response.body).toEqual({
+      membership: {
+        id: expect.any(String),
+        gangId,
+        playerId,
+        displayName: "Nina Vale",
+        role: "leader",
+        joinedAt: "2026-03-17T00:25:00.000Z"
+      },
+      gang: {
+        id: gangId,
+        name: "Night Owls",
+        createdAt: "2026-03-16T22:00:00.000Z",
+        createdByPlayerId: playerId,
+        memberCount: 3
+      }
+    });
   });
 });

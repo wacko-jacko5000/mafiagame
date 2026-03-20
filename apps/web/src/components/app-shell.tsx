@@ -7,6 +7,10 @@ import { useSession } from "./providers/session-provider";
 
 const navigationItems = [
   { href: "/", label: "Dashboard" },
+  { href: "/gangs", label: "Gangs" },
+  { href: "/territory", label: "Territory" },
+  { href: "/market", label: "Market" },
+  { href: "/achievements", label: "Achievements" },
   { href: "/crimes", label: "Crimes" },
   { href: "/inventory", label: "Inventory" },
   { href: "/missions", label: "Missions" },

@@ -1,0 +1,207 @@
+import { describe, expect, it } from "vitest";
+
+import type { District, InventoryItem, MarketListing, PlayerAchievement, PlayerMission } from "./api-types";
+import {
+  getListableInventoryItems,
+  getOwnMarketListings,
+  summarizeAchievements,
+  summarizeMissions,
+  summarizeTerritory
+} from "./game-state";
+
+describe("game-state helpers", () => {
+  it("summarizes achievement progress and picks the closest locked entry", () => {
+    const achievements: PlayerAchievement[] = [
+      {
+        playerId: "player-1",
+        achievementId: "a-1",
+        progress: 1,
+        targetProgress: 1,
+        unlockedAt: "2026-03-19T12:00:00.000Z",
+        definition: {
+          id: "a-1",
+          name: "Unlocked",
+          description: "Done",
+          triggerType: "test",
+          targetCount: 1
+        }
+      },
+      {
+        playerId: "player-1",
+        achievementId: "a-2",
+        progress: 4,
+        targetProgress: 5,
+        unlockedAt: null,
+        definition: {
+          id: "a-2",
+          name: "Almost there",
+          description: "Soon",
+          triggerType: "test",
+          targetCount: 5
+        }
+      }
+    ];
+
+    expect(summarizeAchievements(achievements)).toMatchObject({
+      unlockedCount: 1,
+      inProgressCount: 1,
+      nextUp: { achievementId: "a-2" }
+    });
+  });
+
+  it("counts active, completed, and ready-to-complete missions", () => {
+    const missions: PlayerMission[] = [
+      {
+        id: "pm-1",
+        playerId: "player-1",
+        missionId: "m-1",
+        status: "active",
+        progress: 3,
+        targetProgress: 3,
+        acceptedAt: "2026-03-19T12:00:00.000Z",
+        completedAt: null,
+        definition: {
+          id: "m-1",
+          name: "Active",
+          description: "Ready",
+          objectiveType: "test",
+          objectiveTarget: 3,
+          rewardCash: 100,
+          rewardRespect: 1,
+          isRepeatable: false
+        }
+      },
+      {
+        id: "pm-2",
+        playerId: "player-1",
+        missionId: "m-2",
+        status: "completed",
+        progress: 1,
+        targetProgress: 1,
+        acceptedAt: "2026-03-19T12:00:00.000Z",
+        completedAt: "2026-03-19T12:05:00.000Z",
+        definition: {
+          id: "m-2",
+          name: "Completed",
+          description: "Done",
+          objectiveType: "test",
+          objectiveTarget: 1,
+          rewardCash: 50,
+          rewardRespect: 1,
+          isRepeatable: false
+        }
+      }
+    ];
+
+    expect(summarizeMissions(missions)).toEqual({
+      activeCount: 1,
+      completedCount: 1,
+      readyToCompleteCount: 1
+    });
+  });
+
+  it("summarizes territory ownership and claimable payouts for a gang", () => {
+    const districts: District[] = [
+      {
+        id: "d-1",
+        name: "North",
+        payout: {
+          amount: 1000,
+          cooldownMinutes: 60,
+          lastClaimedAt: null,
+          nextClaimAvailableAt: null
+        },
+        createdAt: "2026-03-18T00:00:00.000Z",
+        controller: {
+          gangId: "gang-1",
+          gangName: "Night Owls",
+          capturedAt: "2026-03-18T00:00:00.000Z"
+        },
+        activeWar: null
+      },
+      {
+        id: "d-2",
+        name: "South",
+        payout: {
+          amount: 1000,
+          cooldownMinutes: 60,
+          lastClaimedAt: "2026-03-19T00:00:00.000Z",
+          nextClaimAvailableAt: "2026-03-19T01:00:00.000Z"
+        },
+        createdAt: "2026-03-18T00:00:00.000Z",
+        controller: {
+          gangId: "gang-2",
+          gangName: "Rivals",
+          capturedAt: "2026-03-18T00:00:00.000Z"
+        },
+        activeWar: {
+          id: "war-1",
+          districtId: "d-2",
+          attackerGangId: "gang-1",
+          attackerGangName: "Night Owls",
+          defenderGangId: "gang-2",
+          defenderGangName: "Rivals",
+          startedByPlayerId: "player-1",
+          status: "pending",
+          createdAt: "2026-03-19T00:30:00.000Z",
+          resolvedAt: null,
+          winningGangId: null,
+          winningGangName: null
+        }
+      }
+    ];
+
+    expect(summarizeTerritory(districts, "gang-1")).toEqual({
+      controlledCount: 1,
+      activeWarCount: 1,
+      claimablePayoutCount: 1
+    });
+  });
+
+  it("filters market-eligible inventory items and owned listings", () => {
+    const inventory: InventoryItem[] = [
+      {
+        id: "i-1",
+        playerId: "player-1",
+        itemId: "weapon-1",
+        name: "Knife",
+        type: "weapon",
+        price: 100,
+        equippedSlot: null,
+        marketListingId: null,
+        acquiredAt: "2026-03-18T00:00:00.000Z"
+      },
+      {
+        id: "i-2",
+        playerId: "player-1",
+        itemId: "armor-1",
+        name: "Vest",
+        type: "armor",
+        price: 200,
+        equippedSlot: null,
+        marketListingId: "listing-1",
+        acquiredAt: "2026-03-18T00:00:00.000Z"
+      }
+    ];
+    const listings: MarketListing[] = [
+      {
+        id: "listing-1",
+        inventoryItemId: "i-2",
+        sellerPlayerId: "player-1",
+        buyerPlayerId: null,
+        itemId: "armor-1",
+        itemName: "Vest",
+        itemType: "armor",
+        price: 300,
+        status: "active",
+        createdAt: "2026-03-19T00:00:00.000Z",
+        soldAt: null
+      }
+    ];
+
+    expect(getListableInventoryItems(inventory).map((item) => item.id)).toEqual(["i-1"]);
+    expect(getOwnMarketListings(listings, "player-1").map((listing) => listing.id)).toEqual([
+      "listing-1"
+    ]);
+  });
+});

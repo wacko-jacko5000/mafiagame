@@ -105,6 +105,19 @@ body {
   color: var(--text-muted);
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+  text-transform: capitalize;
+}
+
 .nav-panel {
   display: flex;
   flex-wrap: wrap;
@@ -152,6 +165,10 @@ body {
 .shortcut-list,
 .stack {
   grid-template-columns: 1fr;
+}
+
+.compact-stack {
+  gap: 14px;
 }
 
 .shortcut-card {

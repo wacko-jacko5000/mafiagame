@@ -2,6 +2,7 @@ import type {
   GangInviteDecisionResult,
   GangInviteListItem,
   GangMemberListItem,
+  PlayerGangMembershipView,
   GangSummary,
   LeaveGangResult
 } from "../domain/gangs.types";
@@ -9,6 +10,7 @@ import type {
   GangInviteDecisionResponseBody,
   GangInviteResponseBody,
   GangMemberResponseBody,
+  PlayerGangMembershipResponseBody,
   GangResponseBody,
   LeaveGangResponseBody
 } from "./gangs.contracts";
@@ -72,5 +74,14 @@ export function toGangInviteDecisionResponseBody(
     membership: result.membership
       ? toGangMemberResponseBody(result.membership)
       : null
+  };
+}
+
+export function toPlayerGangMembershipResponseBody(
+  view: PlayerGangMembershipView
+): PlayerGangMembershipResponseBody {
+  return {
+    membership: toGangMemberResponseBody(view.membership),
+    gang: toGangResponseBody(view.gang)
   };
 }

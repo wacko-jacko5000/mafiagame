@@ -7,13 +7,19 @@ import { GangsService } from "./application/gangs.service";
 import {
   GangInvitesController,
   GangsController,
+  PlayerGangMembershipController,
   PlayerGangInvitesController
 } from "./api/gangs.controller";
 import { PrismaGangsRepository } from "./infrastructure/prisma-gangs.repository";
 
 @Module({
   imports: [PlayerModule, DomainEventsModule],
-  controllers: [GangsController, GangInvitesController, PlayerGangInvitesController],
+  controllers: [
+    GangsController,
+    GangInvitesController,
+    PlayerGangInvitesController,
+    PlayerGangMembershipController
+  ],
   providers: [
     GangsService,
     {

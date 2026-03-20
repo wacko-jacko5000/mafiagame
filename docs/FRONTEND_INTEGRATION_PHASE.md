@@ -10,6 +10,10 @@ Working routes in `apps/web`:
 - `/register`
 - `/create-player`
 - `/`
+- `/gangs`
+- `/territory`
+- `/market`
+- `/achievements`
 - `/crimes`
 - `/inventory`
 - `/missions`
@@ -30,16 +34,20 @@ Working routes in `apps/web`:
 - Auth register/login
 - Session restore on reload
 - Player creation bootstrap
-- Dashboard with player basics and recent activity
+- Dashboard with player basics, season visibility, gang summary, territory summary, mission summary, achievements summary, and recent activity
+- Gangs page with gang creation, membership visibility, incoming invite decisions, leave flow, and leader invite-status visibility
+- Territory page with district controllers, payout timers, active wars, and existing claim/payout/start-war actions
+- Market page with active listings, buy flow, create listing flow, and cancel flow
+- Achievements page with progress and unlocked-state visibility
 - Crime list and execute flow
 - Inventory shop, owned inventory, equip, and unequip flow
 - Mission list, accept, and complete flow
 - Activity feed list and mark-read flow
-- Public leaderboard read
+- Public leaderboard read plus gang-leader invite actions
 
 ### Explicitly left for later
 
-- Market, combat, gangs, territory, admin, and season-focused UI
+- Combat, admin, and richer season-focused UI
 - Realtime feed updates
 - Rich optimistic caching and invalidation strategy
 - Cookie/refresh-token auth redesign
@@ -47,4 +55,6 @@ Working routes in `apps/web`:
 
 ## Backend changes
 
-None were required for this frontend integration pass. The existing auth, player, crimes, inventory, missions, notifications, and leaderboard endpoints were sufficient.
+One minimal backend visibility helper was added: `GET /players/:playerId/gang-membership`.
+
+This was required so the frontend can determine the logged-in player's current gang and unlock the new gang and territory screens without guessing or moving backend-owned rules into the client.

@@ -38,6 +38,7 @@ Own gang creation, membership persistence, invite rules, simple gang roles, and 
 - Join and leave membership endpoints
 - Invite creation and invite resolution endpoints
 - Gang summary and member listing queries
+- Current player gang-membership read for client visibility
 
 ## Test expectations
 

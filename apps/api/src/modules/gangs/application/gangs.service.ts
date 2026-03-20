@@ -30,6 +30,7 @@ import type {
   GangInviteSnapshot,
   GangMemberListItem,
   GangMemberSnapshot,
+  PlayerGangMembershipView,
   GangSummary,
   InvitePlayerToGangCommand,
   JoinGangCommand,
@@ -193,6 +194,28 @@ export class GangsService {
     return memberships.map((membership, index) =>
       this.toGangMemberListItem(membership, players[index]!.displayName)
     );
+  }
+
+  async getPlayerGangMembership(
+    playerId: string
+  ): Promise<PlayerGangMembershipView | null> {
+    await this.playerService.getPlayerById(playerId);
+
+    const membership = await this.gangsRepository.findMembershipByPlayerId(playerId);
+
+    if (!membership) {
+      return null;
+    }
+
+    const [player, gang] = await Promise.all([
+      this.playerService.getPlayerById(playerId),
+      this.getGangById(membership.gangId)
+    ]);
+
+    return {
+      membership: this.toGangMemberListItem(membership, player.displayName),
+      gang
+    };
   }
 
   async invitePlayer(command: InvitePlayerToGangCommand): Promise<GangInviteListItem> {

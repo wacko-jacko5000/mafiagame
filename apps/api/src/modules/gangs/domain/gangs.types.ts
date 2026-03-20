@@ -78,6 +78,11 @@ export interface GangInviteDecisionResult {
   membership: GangMemberListItem | null;
 }
 
+export interface PlayerGangMembershipView {
+  membership: GangMemberListItem;
+  gang: GangSummary;
+}
+
 export interface CreateGangValues {
   playerId: string;
   name: string;

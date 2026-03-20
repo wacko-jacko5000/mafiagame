@@ -48,3 +48,8 @@ export interface GangInviteDecisionResponseBody {
   status: "accepted" | "declined";
   membership: GangMemberResponseBody | null;
 }
+
+export interface PlayerGangMembershipResponseBody {
+  membership: GangMemberResponseBody;
+  gang: GangResponseBody;
+}

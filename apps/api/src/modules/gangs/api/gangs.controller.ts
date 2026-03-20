@@ -13,6 +13,7 @@ import type {
   GangInviteDecisionResponseBody,
   GangInviteResponseBody,
   GangMemberResponseBody,
+  PlayerGangMembershipResponseBody,
   GangResponseBody,
   LeaveGangResponseBody
 } from "./gangs.contracts";
@@ -20,6 +21,7 @@ import {
   toGangInviteDecisionResponseBody,
   toGangInviteResponseBody,
   toGangMemberResponseBody,
+  toPlayerGangMembershipResponseBody,
   toGangResponseBody,
   toLeaveGangResponseBody
 } from "./gangs.presenter";
@@ -157,5 +159,21 @@ export class PlayerGangInvitesController {
   ): Promise<GangInviteResponseBody[]> {
     const invites = await this.gangsService.listPlayerGangInvites(playerId);
     return invites.map(toGangInviteResponseBody);
+  }
+}
+
+@Controller("players/:playerId/gang-membership")
+export class PlayerGangMembershipController {
+  constructor(
+    @Inject(GangsService)
+    private readonly gangsService: GangsService
+  ) {}
+
+  @Get()
+  async getPlayerGangMembership(
+    @Param("playerId", ParseUUIDPipe) playerId: string
+  ): Promise<PlayerGangMembershipResponseBody | null> {
+    const membership = await this.gangsService.getPlayerGangMembership(playerId);
+    return membership ? toPlayerGangMembershipResponseBody(membership) : null;
   }
 }

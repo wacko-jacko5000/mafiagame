@@ -1,18 +1,31 @@
 import type {
+  CurrentSeasonResponse,
   AuthMeResponse,
   AuthSession,
   CrimeDefinition,
   CrimeExecutionResult,
+  District,
+  DistrictPayoutClaimResult,
+  DistrictWar,
   EquippedItems,
+  Gang,
+  GangInvite,
+  GangInviteDecisionResult,
+  GangMember,
   InventoryItem,
   Leaderboard,
   LeaderboardDefinition,
+  MarketListing,
+  MarketPurchaseResult,
   MissionCompletionResult,
   MissionDefinition,
   Player,
+  PlayerAchievement,
   PlayerActivity,
+  PlayerGangMembership,
   PlayerMission,
   PurchaseItemResult,
+  Season,
   ShopItem
 } from "./api-types";
 import { apiRequest } from "./api-client";
@@ -135,6 +148,117 @@ export const gameApi = {
     get(leaderboardId: string, limit?: number) {
       const query = limit ? `?limit=${limit}` : "";
       return apiRequest<Leaderboard>(`/api/leaderboards/${leaderboardId}${query}`);
+    }
+  },
+  achievements: {
+    listPlayer(playerId: string) {
+      return apiRequest<PlayerAchievement[]>(`/api/players/${playerId}/achievements`);
+    }
+  },
+  seasons: {
+    listCurrent() {
+      return apiRequest<CurrentSeasonResponse>("/api/seasons/current");
+    },
+    listAll() {
+      return apiRequest<Season[]>("/api/seasons");
+    }
+  },
+  gangs: {
+    create(playerId: string, name: string) {
+      return apiRequest<Gang>("/api/gangs", {
+        method: "POST",
+        body: { playerId, name }
+      });
+    },
+    get(gangId: string) {
+      return apiRequest<Gang>(`/api/gangs/${gangId}`);
+    },
+    getMembershipByPlayer(playerId: string) {
+      return apiRequest<PlayerGangMembership | null>(
+        `/api/players/${playerId}/gang-membership`
+      );
+    },
+    listMembers(gangId: string) {
+      return apiRequest<GangMember[]>(`/api/gangs/${gangId}/members`);
+    },
+    listGangInvites(gangId: string) {
+      return apiRequest<GangInvite[]>(`/api/gangs/${gangId}/invites`);
+    },
+    listPlayerInvites(playerId: string) {
+      return apiRequest<GangInvite[]>(`/api/players/${playerId}/gang-invites`);
+    },
+    invitePlayer(gangId: string, invitedPlayerId: string, invitedByPlayerId: string) {
+      return apiRequest<GangInvite>(`/api/gangs/${gangId}/invite/${invitedPlayerId}`, {
+        method: "POST",
+        body: { invitedByPlayerId }
+      });
+    },
+    acceptInvite(inviteId: string, playerId: string) {
+      return apiRequest<GangInviteDecisionResult>(`/api/gang-invites/${inviteId}/accept`, {
+        method: "POST",
+        body: { playerId }
+      });
+    },
+    declineInvite(inviteId: string, playerId: string) {
+      return apiRequest<GangInviteDecisionResult>(`/api/gang-invites/${inviteId}/decline`, {
+        method: "POST",
+        body: { playerId }
+      });
+    },
+    leave(gangId: string, playerId: string) {
+      return apiRequest<{ gangId: string; playerId: string; role: "leader" | "member"; gangDeleted: boolean }>(
+        `/api/gangs/${gangId}/leave`,
+        {
+          method: "POST",
+          body: { playerId }
+        }
+      );
+    }
+  },
+  territory: {
+    listDistricts() {
+      return apiRequest<District[]>("/api/districts");
+    },
+    claimDistrict(districtId: string, playerId: string, gangId: string) {
+      return apiRequest<District>(`/api/districts/${districtId}/claim`, {
+        method: "POST",
+        body: { playerId, gangId }
+      });
+    },
+    claimPayout(districtId: string, playerId: string, gangId: string) {
+      return apiRequest<DistrictPayoutClaimResult>(`/api/districts/${districtId}/payout/claim`, {
+        method: "POST",
+        body: { playerId, gangId }
+      });
+    },
+    startWar(districtId: string, playerId: string, attackerGangId: string) {
+      return apiRequest<DistrictWar>(`/api/districts/${districtId}/war/start`, {
+        method: "POST",
+        body: { playerId, attackerGangId }
+      });
+    }
+  },
+  market: {
+    listListings() {
+      return apiRequest<MarketListing[]>("/api/market/listings");
+    },
+    createListing(playerId: string, inventoryItemId: string, price: number) {
+      return apiRequest<MarketListing>("/api/market/listings", {
+        method: "POST",
+        body: { playerId, inventoryItemId, price }
+      });
+    },
+    buyListing(listingId: string, buyerPlayerId: string) {
+      return apiRequest<MarketPurchaseResult>(`/api/market/listings/${listingId}/buy`, {
+        method: "POST",
+        body: { buyerPlayerId }
+      });
+    },
+    cancelListing(listingId: string, playerId: string) {
+      return apiRequest<MarketListing>(`/api/market/listings/${listingId}/cancel`, {
+        method: "POST",
+        body: { playerId }
+      });
     }
   }
 };

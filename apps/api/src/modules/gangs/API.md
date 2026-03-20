@@ -26,3 +26,5 @@
   - response: `{ inviteId, status, membership }`
 - `GET /players/:playerId/gang-invites`
   - response: list of invite rows with current status
+- `GET /players/:playerId/gang-membership`
+  - response: `{ membership, gang }` or `null`
