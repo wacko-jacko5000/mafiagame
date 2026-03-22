@@ -1,9 +1,12 @@
 import type {
+  CrimeDefinition,
   District,
   InventoryItem,
   MarketListing,
+  MissionDefinition,
   PlayerAchievement,
-  PlayerMission
+  PlayerMission,
+  ShopItem
 } from "./api-types";
 
 export function summarizeAchievements(achievements: PlayerAchievement[]) {
@@ -66,4 +69,31 @@ export function getListableInventoryItems(inventory: InventoryItem[]) {
 
 export function getOwnMarketListings(listings: MarketListing[], playerId: string) {
   return listings.filter((listing) => listing.sellerPlayerId === playerId);
+}
+
+export function getUnlockedCrimes(crimes: CrimeDefinition[], playerLevel: number | null) {
+  if (!playerLevel) {
+    return [];
+  }
+
+  return crimes.filter((crime) => crime.unlockLevel <= playerLevel);
+}
+
+export function getUnlockedMissionDefinitions(
+  definitions: MissionDefinition[],
+  playerLevel: number | null
+) {
+  if (!playerLevel) {
+    return [];
+  }
+
+  return definitions.filter((definition) => definition.unlockLevel <= playerLevel);
+}
+
+export function getUnlockedShopItems(shopItems: ShopItem[], playerLevel: number | null) {
+  if (!playerLevel) {
+    return [];
+  }
+
+  return shopItems.filter((item) => item.unlockLevel <= playerLevel && item.isUnlocked);
 }

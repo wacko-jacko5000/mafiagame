@@ -10,7 +10,9 @@ import type {
 import { ApiError } from "../lib/api-client";
 import { formatMoney } from "../lib/formatters";
 import { gameApi } from "../lib/game-api";
+import { getUnlockedMissionDefinitions } from "../lib/game-state";
 import { AppShell } from "./app-shell";
+import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
 
 interface MissionRow {
@@ -20,6 +22,7 @@ interface MissionRow {
 
 export function MissionsPage() {
   const { accessToken } = useSession();
+  const { player } = usePlayerState();
   const [definitions, setDefinitions] = useState<MissionDefinition[]>([]);
   const [playerMissions, setPlayerMissions] = useState<PlayerMission[]>([]);
   const [completionResult, setCompletionResult] = useState<MissionCompletionResult | null>(null);
@@ -60,12 +63,13 @@ export function MissionsPage() {
 
   const missionRows = useMemo<MissionRow[]>(() => {
     const byMissionId = new Map(playerMissions.map((mission) => [mission.missionId, mission]));
+    const unlockedDefinitions = getUnlockedMissionDefinitions(definitions, player?.level ?? null);
 
-    return definitions.map((definition) => ({
+    return unlockedDefinitions.map((definition) => ({
       definition,
       playerMission: byMissionId.get(definition.id) ?? null
     }));
-  }, [definitions, playerMissions]);
+  }, [definitions, player?.level, playerMissions]);
 
   async function handleAccept(missionId: string) {
     if (!accessToken) {
@@ -126,7 +130,7 @@ export function MissionsPage() {
           <dl className="stats-grid compact">
             <div>
               <dt>Catalog entries</dt>
-              <dd>{definitions.length}</dd>
+              <dd>{missionRows.length}</dd>
             </div>
             <div>
               <dt>Accepted</dt>
@@ -168,6 +172,8 @@ export function MissionsPage() {
         <h2>Starter missions</h2>
         {isLoading ? (
           <p className="muted">Loading missions...</p>
+        ) : missionRows.length === 0 ? (
+          <p className="muted">No missions are unlocked at your current level yet.</p>
         ) : (
           <div className="card-grid">
             {missionRows.map(({ definition, playerMission }) => {

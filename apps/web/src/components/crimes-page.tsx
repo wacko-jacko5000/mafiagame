@@ -11,6 +11,7 @@ import {
   formatRelativeDuration
 } from "../lib/formatters";
 import { gameApi } from "../lib/game-api";
+import { getUnlockedCrimes } from "../lib/game-state";
 import { AppShell } from "./app-shell";
 import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
@@ -23,6 +24,7 @@ export function CrimesPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCrimeId, setActiveCrimeId] = useState<string | null>(null);
+  const visibleCrimes = getUnlockedCrimes(crimes, player?.level ?? null);
 
   async function loadData() {
     if (!accessToken || !account?.player?.id) {
@@ -173,9 +175,11 @@ export function CrimesPage() {
         <h2>Starter crimes</h2>
         {isLoading ? (
           <p className="muted">Loading crimes...</p>
+        ) : visibleCrimes.length === 0 ? (
+          <p className="muted">No crimes are unlocked at your current level yet.</p>
         ) : (
           <div className="card-grid">
-            {crimes.map((crime) => (
+            {visibleCrimes.map((crime) => (
               <article key={crime.id} className="subpanel">
                 <h3>{crime.name}</h3>
                 <dl className="stats-grid compact">

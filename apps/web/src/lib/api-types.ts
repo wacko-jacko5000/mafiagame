@@ -43,6 +43,8 @@ export interface Player {
 export interface CrimeDefinition {
   id: string;
   name: string;
+  unlockLevel: number;
+  requiredLevel: number;
   energyCost: number;
   successRate: number;
   cashRewardMin: number;
@@ -130,10 +132,13 @@ export interface MissionDefinition {
   name: string;
   description: string;
   objectiveType: string;
+  unlockLevel: number;
+  requiredLevel: number;
   objectiveTarget: number;
   rewardCash: number;
   rewardRespect: number;
   isRepeatable: boolean;
+  itemType?: "weapon" | "armor";
 }
 
 export interface PlayerMission {

@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import type { District, InventoryItem, MarketListing, PlayerAchievement, PlayerMission } from "./api-types";
+import type {
+  CrimeDefinition,
+  District,
+  InventoryItem,
+  MarketListing,
+  MissionDefinition,
+  PlayerAchievement,
+  PlayerMission,
+  ShopItem
+} from "./api-types";
 import {
+  getUnlockedCrimes,
+  getUnlockedMissionDefinitions,
+  getUnlockedShopItems,
   getListableInventoryItems,
   getOwnMarketListings,
   summarizeAchievements,
@@ -65,6 +77,8 @@ describe("game-state helpers", () => {
           name: "Active",
           description: "Ready",
           objectiveType: "test",
+          unlockLevel: 1,
+          requiredLevel: 1,
           objectiveTarget: 3,
           rewardCash: 100,
           rewardRespect: 1,
@@ -85,6 +99,8 @@ describe("game-state helpers", () => {
           name: "Completed",
           description: "Done",
           objectiveType: "test",
+          unlockLevel: 1,
+          requiredLevel: 1,
           objectiveTarget: 1,
           rewardCash: 50,
           rewardRespect: 1,
@@ -217,5 +233,97 @@ describe("game-state helpers", () => {
     expect(getOwnMarketListings(listings, "player-1").map((listing) => listing.id)).toEqual([
       "listing-1"
     ]);
+  });
+
+  it("returns only unlocked crimes, missions, and shop items for the current level", () => {
+    const crimes: CrimeDefinition[] = [
+      {
+        id: "crime-1",
+        name: "Pickpocket",
+        unlockLevel: 1,
+        requiredLevel: 1,
+        energyCost: 10,
+        successRate: 0.8,
+        cashRewardMin: 100,
+        cashRewardMax: 200,
+        respectReward: 1,
+        failureConsequence: { type: "none" }
+      },
+      {
+        id: "crime-2",
+        name: "Safe Crack",
+        unlockLevel: 4,
+        requiredLevel: 4,
+        energyCost: 18,
+        successRate: 0.55,
+        cashRewardMin: 300,
+        cashRewardMax: 450,
+        respectReward: 4,
+        failureConsequence: { type: "jail", durationSeconds: 120 }
+      }
+    ];
+    const missions: MissionDefinition[] = [
+      {
+        id: "mission-1",
+        name: "Complete 5 crimes",
+        description: "Starter mission",
+        objectiveType: "crime_count",
+        unlockLevel: 1,
+        requiredLevel: 1,
+        objectiveTarget: 5,
+        rewardCash: 500,
+        rewardRespect: 10,
+        isRepeatable: false
+      },
+      {
+        id: "mission-2",
+        name: "Buy your first weapon",
+        description: "Weapon unlock mission",
+        objectiveType: "buy_items",
+        unlockLevel: 3,
+        requiredLevel: 3,
+        objectiveTarget: 1,
+        rewardCash: 1000,
+        rewardRespect: 15,
+        isRepeatable: false,
+        itemType: "weapon"
+      }
+    ];
+    const shopItems: ShopItem[] = [
+      {
+        id: "weapon-1",
+        name: "Pocket Pistol",
+        type: "weapon",
+        category: "handguns",
+        price: 500,
+        equipSlot: "weapon",
+        unlockLevel: 1,
+        unlockRank: "Thug",
+        weaponStats: { damageBonus: 2 },
+        armorStats: null,
+        isUnlocked: true,
+        isLocked: false
+      },
+      {
+        id: "armor-1",
+        name: "Street Vest",
+        type: "armor",
+        category: "armor",
+        price: 1200,
+        equipSlot: "armor",
+        unlockLevel: 5,
+        unlockRank: "Soldier",
+        weaponStats: null,
+        armorStats: { damageReduction: 3 },
+        isUnlocked: false,
+        isLocked: true
+      }
+    ];
+
+    expect(getUnlockedCrimes(crimes, 2).map((crime) => crime.id)).toEqual(["crime-1"]);
+    expect(getUnlockedMissionDefinitions(missions, 2).map((mission) => mission.id)).toEqual([
+      "mission-1"
+    ]);
+    expect(getUnlockedShopItems(shopItems, 2).map((item) => item.id)).toEqual(["weapon-1"]);
   });
 });

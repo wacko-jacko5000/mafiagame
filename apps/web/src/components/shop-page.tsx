@@ -6,6 +6,7 @@ import type { ShopItem, ShopItemCategory } from "../lib/api-types";
 import { ApiError } from "../lib/api-client";
 import { formatMoney } from "../lib/formatters";
 import { gameApi } from "../lib/game-api";
+import { getUnlockedShopItems } from "../lib/game-state";
 import { AppShell } from "./app-shell";
 import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
@@ -99,13 +100,14 @@ export function ShopPage() {
   }
 
   const groupedItems = useMemo(() => {
+    const unlockedItems = getUnlockedShopItems(shopItems, player?.level ?? null);
     const groups = new Map<ShopItemCategory, ShopItem[]>();
 
     for (const category of categoryOrder) {
       groups.set(category, []);
     }
 
-    for (const item of shopItems) {
+    for (const item of unlockedItems) {
       groups.get(item.category)?.push(item);
     }
 
@@ -116,7 +118,7 @@ export function ShopPage() {
         label: categoryLabels[category],
         items: groups.get(category) ?? []
       }));
-  }, [shopItems]);
+  }, [player?.level, shopItems]);
 
   return (
     <AppShell
@@ -161,7 +163,7 @@ export function ShopPage() {
             </div>
             <div>
               <dt>Visible items</dt>
-              <dd>{shopItems.length}</dd>
+              <dd>{groupedItems.reduce((total, group) => total + group.items.length, 0)}</dd>
             </div>
           </dl>
         </article>
@@ -171,6 +173,10 @@ export function ShopPage() {
         <section className="panel">
           <p className="muted">Loading shop...</p>
         </section>
+      ) : groupedItems.length === 0 ? (
+        <section className="panel">
+          <p className="muted">No weapons or armor are unlocked at your current level yet.</p>
+        </section>
       ) : (
         groupedItems.map((group) => (
           <section key={group.category} className="panel">
@@ -179,9 +185,7 @@ export function ShopPage() {
             <div className="card-grid">
               {group.items.map((item) => (
                 <article key={item.id} className="subpanel">
-                  <p className="eyebrow">
-                    {item.isUnlocked ? "Unlocked" : `Level ${item.unlockLevel} Required`}
-                  </p>
+                  <p className="eyebrow">Unlocked</p>
                   <h3>{item.name}</h3>
                   <p className="muted">
                     {item.category} / {item.equipSlot}
@@ -189,21 +193,17 @@ export function ShopPage() {
                   <p className="meta">{describeShopItemStats(item)}</p>
                   <p className="price-tag">{formatMoney(item.price)}</p>
                   <p className="meta">
-                    {item.isUnlocked
-                      ? `Available at your current rank: ${player?.rank ?? item.unlockRank}`
-                      : `Unlocks at level ${item.unlockLevel} - ${item.unlockRank}`}
+                    {`Available at your current rank: ${player?.rank ?? item.unlockRank}`}
                   </p>
                   <button
-                    className={item.isUnlocked ? "button" : "button button-secondary"}
-                    disabled={!item.isUnlocked || !accessToken || actionKey === item.id}
+                    className="button"
+                    disabled={!accessToken || actionKey === item.id}
                     type="button"
                     onClick={() => void handlePurchase(item.id)}
                   >
                     {actionKey === item.id
                       ? "Purchasing..."
-                      : item.isUnlocked
-                        ? "Buy"
-                        : "Locked"}
+                      : "Buy"}
                   </button>
                 </article>
               ))}
