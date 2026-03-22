@@ -13,6 +13,8 @@ Working routes in `apps/web`:
 - `/gangs`
 - `/territory`
 - `/market`
+- `/shop`
+- `/business`
 - `/achievements`
 - `/crimes`
 - `/inventory`
@@ -25,7 +27,9 @@ Working routes in `apps/web`:
 - Auth stays explicit and replaceable: the web app stores the bearer access token client-side and re-validates it through `GET /api/auth/me`.
 - Player bootstrap stays explicit: if an authenticated account has no bound player, the web app sends `POST /api/players` with the bearer token and waits for the backend to own account-to-player binding.
 - API calls are centralized under `apps/web/src/lib/game-api.ts` and `apps/web/src/lib/api-client.ts`.
-- Screen state is local to the route that owns it. No heavy state library was added.
+- The gameplay shell now shares a small player snapshot provider so mobile sticky header resources can stay current without moving rules into React.
+- Sticky menu structure is backend-configured but frontend-owned in presentation: the API returns safe destination keys, and the web app maps them to routes, labels, and icons.
+- Screen state is still local to the route that owns it. No heavy state library was added.
 
 ## Implemented screens
 
@@ -40,21 +44,30 @@ Working routes in `apps/web`:
 - Market page with active listings, buy flow, create listing flow, and cancel flow
 - Achievements page with progress and unlocked-state visibility
 - Crime list and execute flow
-- Inventory shop, owned inventory, equip, and unequip flow
+- Dedicated shop page with level-gated catalog visibility and purchase flow
+- Business placeholder route so sticky navigation can safely point at a valid future-economy destination
+- Inventory page with owned inventory, equipment visibility, and equip/unequip flow
 - Mission list, accept, and complete flow
 - Activity feed list and mark-read flow
 - Public leaderboard read plus gang-leader invite actions
+- Mobile sticky top header with current page title plus configurable player resource pills
+- Mobile sticky bottom nav with up to five primary items plus a `More` bottom sheet
+- Admin-managed sticky menu controls for header visibility/resource fields, primary items, More items, ordering, and visibility
 
 ### Explicitly left for later
 
-- Combat, admin, and richer season-focused UI
+- Combat and richer season-focused UI
 - Realtime feed updates
 - Rich optimistic caching and invalidation strategy
 - Cookie/refresh-token auth redesign
-- Full visual design system and mobile refinement
+- Full visual design system beyond the current mobile-first navigation shell
 
 ## Backend changes
 
-One minimal backend visibility helper was added: `GET /players/:playerId/gang-membership`.
+Additional backend UI-contract helpers now exist for the mobile shell:
 
-This was required so the frontend can determine the logged-in player's current gang and unlock the new gang and territory screens without guessing or moving backend-owned rules into the client.
+- `GET /api/sticky-menu`
+- `GET /api/admin/sticky-menu`
+- `PATCH /api/admin/sticky-menu`
+
+These routes keep sticky navigation configurable without exposing arbitrary route editing to operators.

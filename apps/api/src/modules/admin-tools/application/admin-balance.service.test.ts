@@ -22,8 +22,8 @@ describe("AdminBalanceService", () => {
             name: "Pickpocket",
             energyCost: 10,
             successRate: 0.75,
-            cashRewardMin: 120,
-            cashRewardMax: 220,
+            minReward: 120,
+            maxReward: 220,
             respectReward: 1,
             failureConsequence: {
               type: "none"
@@ -48,12 +48,14 @@ describe("AdminBalanceService", () => {
         listShopItemBalances: vi.fn().mockReturnValue([
           {
             id: "rusty-knife",
-            name: "Rusty Knife",
+            name: "Glock 17",
             type: "weapon",
             price: 400,
             equipSlot: "weapon",
-            combatAttackBonus: 4,
-            combatDefenseBonus: 0
+            weaponStats: {
+              damageBonus: 4
+            },
+            armorStats: null
           }
         ])
       } as unknown as InventoryBalanceService
@@ -115,8 +117,8 @@ describe("AdminBalanceService", () => {
             name: "Pickpocket",
             energyCost: 10,
             successRate: 0.75,
-            cashRewardMin: 120,
-            cashRewardMax: 220,
+            minReward: 120,
+            maxReward: 220,
             respectReward: 1,
             failureConsequence: {
               type: "none"
@@ -129,8 +131,8 @@ describe("AdminBalanceService", () => {
             name: "Pickpocket",
             energyCost: 12,
             successRate: 0.7,
-            cashRewardMin: 150,
-            cashRewardMax: 240,
+            minReward: 150,
+            maxReward: 240,
             respectReward: 2,
             failureConsequence: {
               type: "none"

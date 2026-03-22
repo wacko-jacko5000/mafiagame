@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import type {
   District,
-  Player,
   PlayerAchievement,
   PlayerActivity,
   PlayerGangMembership,
@@ -21,11 +20,12 @@ import {
   summarizeTerritory
 } from "../lib/game-state";
 import { AppShell } from "./app-shell";
+import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
 
 export function DashboardPage() {
   const { accessToken, account } = useSession();
-  const [player, setPlayer] = useState<Player | null>(null);
+  const { player } = usePlayerState();
   const [activity, setActivity] = useState<PlayerActivity[]>([]);
   const [missions, setMissions] = useState<PlayerMission[]>([]);
   const [achievements, setAchievements] = useState<PlayerAchievement[]>([]);
@@ -46,7 +46,6 @@ export function DashboardPage() {
 
       try {
         const [
-          nextPlayer,
           nextActivity,
           nextMissions,
           nextAchievements,
@@ -54,7 +53,6 @@ export function DashboardPage() {
           nextGangMembership,
           nextDistricts
         ] = await Promise.all([
-          gameApi.players.getById(account.player.id),
           gameApi.activity.listCurrent(accessToken, 5),
           gameApi.missions.listCurrent(accessToken),
           gameApi.achievements.listPlayer(account.player.id),
@@ -63,7 +61,6 @@ export function DashboardPage() {
           gameApi.territory.listDistricts()
         ]);
 
-        setPlayer(nextPlayer);
         setActivity(nextActivity);
         setMissions(nextMissions);
         setAchievements(nextAchievements);
@@ -122,8 +119,22 @@ export function DashboardPage() {
               <dd>{player ? formatMoney(player.cash) : "..."}</dd>
             </div>
             <div>
+              <dt>Level</dt>
+              <dd>{player ? `${player.level} - ${player.rank}` : "..."}</dd>
+            </div>
+            <div>
               <dt>Respect</dt>
-              <dd>{player?.respect ?? "..."}</dd>
+              <dd>{player?.currentRespect ?? "..."}</dd>
+            </div>
+            <div>
+              <dt>Progress</dt>
+              <dd>
+                {player
+                  ? player.nextLevel
+                    ? `${player.progressPercent}% to level ${player.nextLevel}`
+                    : "Max level"
+                  : "..."}
+              </dd>
             </div>
             <div>
               <dt>Energy</dt>
@@ -140,6 +151,14 @@ export function DashboardPage() {
             <div>
               <dt>Hospitalized until</dt>
               <dd>{formatDateTime(player?.hospitalizedUntil ?? null)}</dd>
+            </div>
+            <div>
+              <dt>Next rank</dt>
+              <dd>
+                {player?.nextRank
+                  ? `${player.nextRank} in ${player.respectToNextLevel} respect`
+                  : "Legendary Don"}
+              </dd>
             </div>
           </dl>
         </article>
@@ -239,6 +258,9 @@ export function DashboardPage() {
         <p className="eyebrow">Quick routes</p>
         <h2>Playtest coverage</h2>
         <div className="shortcut-list">
+          <Link className="shortcut-card" href="/shop">
+            Browse the level-gated shop catalog, inspect locked weapons, and purchase new gear.
+          </Link>
           <Link className="shortcut-card" href="/gangs">
             Create or inspect a gang, handle invites, and see current membership.
           </Link>

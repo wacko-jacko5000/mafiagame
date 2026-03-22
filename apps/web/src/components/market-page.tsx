@@ -2,18 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import type { InventoryItem, MarketListing, Player } from "../lib/api-types";
+import type { InventoryItem, MarketListing } from "../lib/api-types";
 import { ApiError } from "../lib/api-client";
 import { formatDateTime, formatMoney } from "../lib/formatters";
 import { gameApi } from "../lib/game-api";
 import { getListableInventoryItems, getOwnMarketListings } from "../lib/game-state";
 import { AppShell } from "./app-shell";
+import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
 
 export function MarketPage() {
   const { accessToken, account } = useSession();
+  const { player, refreshPlayer } = usePlayerState();
   const playerId = account?.player?.id ?? null;
-  const [player, setPlayer] = useState<Player | null>(null);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [listings, setListings] = useState<MarketListing[]>([]);
   const [selectedInventoryItemId, setSelectedInventoryItemId] = useState("");
@@ -32,13 +33,11 @@ export function MarketPage() {
     setError(null);
 
     try {
-      const [nextPlayer, nextInventory, nextListings] = await Promise.all([
-        gameApi.players.getById(playerId),
+      const [nextInventory, nextListings] = await Promise.all([
         gameApi.inventory.getCurrentInventory(accessToken),
         gameApi.market.listListings()
       ]);
 
-      setPlayer(nextPlayer);
       setInventory(nextInventory);
       setListings(nextListings);
     } catch (nextError) {
@@ -80,6 +79,7 @@ export function MarketPage() {
 
     try {
       const nextNotice = await action();
+      await refreshPlayer();
       await loadData();
       if (nextNotice) {
         setNotice(nextNotice);

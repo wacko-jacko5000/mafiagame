@@ -16,6 +16,7 @@
 - `inventory` owns item catalogs and player-owned item persistence.
 - `inventory` owns equipped-state rules on top of owned inventory rows.
 - `inventory` may coordinate an atomic shop purchase with player cash through an explicit infrastructure transaction boundary; cash ownership still remains with `player`.
+- `inventory` now also consumes player-owned derived progression reads to project lock state and enforce static item unlock levels without persisting a second progression source.
 - `combat` reads equipped loadout projections from `inventory`, reads health from `player`, and may apply hospitalization through an explicit backend transaction boundary using hospital-owned rules.
 - `gangs` owns gang, membership, and invite persistence, validates player existence through `player`, and does not embed gang state into player records.
 - `territory` owns district, current-control, and district-war persistence, validates gang existence and leader claim authority through `gangs`, and does not own gang membership logic.
@@ -24,11 +25,13 @@
 - `inventory` supports `combat`, `crime`, `missions`, and `market`.
 - `market` owns listing state, depends on `inventory` item ownership, and settles direct buyer/seller cash using explicit backend transaction boundaries while `player` remains the owner of cash state.
 - `missions` now consumes explicit in-process domain events from `crime`, `inventory`, `combat`, and `territory` instead of direct progress-hook service calls.
+- `missions` may also read current player-facing state from `inventory`, `gangs`, and `territory` to evaluate static state-based mission objectives without introducing a generic quest engine.
 - `achievements` consumes explicit in-process domain events from `crime`, `inventory`, `combat`, `territory`, and `market` instead of reaching into gameplay module internals.
 - `market` now publishes explicit in-process sale events for future consumers while remaining synchronous and in-process.
 - `gangs` and `territory` are tightly related but should stay split for independent evolution.
 - `notifications` currently owns persistent player activity feed records and consumes explicit events from `market`, `territory`, `achievements`, and `gangs`.
 - `leaderboard` owns public ranking definitions and reads existing persisted `player` and `achievements` state through its own repository instead of introducing a separate score pipeline in this phase.
+- `admin-tools` now owns the persisted sticky mobile navigation config, while `apps/web` maps those safe destination keys to route labels, icons, and titles.
 
 ## Dependency rules
 

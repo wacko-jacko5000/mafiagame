@@ -1,18 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import type { EquippedItems, InventoryItem, Player, ShopItem } from "../lib/api-types";
+import type { EquippedItems, InventoryItem } from "../lib/api-types";
 import { ApiError } from "../lib/api-client";
 import { formatDateTime, formatMoney } from "../lib/formatters";
 import { gameApi } from "../lib/game-api";
 import { AppShell } from "./app-shell";
+import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
+
+function describeInventoryItemStats(item: InventoryItem): string {
+  if (item.weaponStats) {
+    return `Damage +${item.weaponStats.damageBonus}`;
+  }
+
+  if (item.armorStats) {
+    return `Damage reduction ${item.armorStats.damageReduction}`;
+  }
+
+  return "No combat stats";
+}
 
 export function InventoryPage() {
   const { accessToken, account } = useSession();
-  const [player, setPlayer] = useState<Player | null>(null);
-  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const { player, refreshPlayer } = usePlayerState();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [equipment, setEquipment] = useState<EquippedItems | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,15 +41,11 @@ export function InventoryPage() {
     setError(null);
 
     try {
-      const [nextPlayer, nextShopItems, nextInventory, nextEquipment] = await Promise.all([
-        gameApi.players.getById(account.player.id),
-        gameApi.inventory.listShopItems(),
+      const [nextInventory, nextEquipment] = await Promise.all([
         gameApi.inventory.getCurrentInventory(accessToken),
         gameApi.inventory.getCurrentEquipment(accessToken)
       ]);
 
-      setPlayer(nextPlayer);
-      setShopItems(nextShopItems);
       setInventory(nextInventory);
       setEquipment(nextEquipment);
     } catch (nextError) {
@@ -60,6 +69,7 @@ export function InventoryPage() {
 
     try {
       await action();
+      await refreshPlayer();
       await loadData();
     } catch (nextError) {
       setError(
@@ -75,18 +85,22 @@ export function InventoryPage() {
   return (
     <AppShell
       title="Inventory"
-      subtitle="Buy starter items, inspect owned inventory, and assign equipment slots."
+      subtitle="Inspect owned items, manage equipped gear, and keep catalog browsing on the dedicated shop page."
     >
       {error ? <p className="notice notice-error">{error}</p> : null}
 
       <section className="dashboard-grid">
         <article className="panel">
           <p className="eyebrow">Resources</p>
-          <h2>Purchase capacity</h2>
+          <h2>Current inventory status</h2>
           <dl className="stats-grid compact">
             <div>
               <dt>Cash</dt>
               <dd>{player ? formatMoney(player.cash) : "..."}</dd>
+            </div>
+            <div>
+              <dt>Rank</dt>
+              <dd>{player ? `Level ${player.level} - ${player.rank}` : "..."}</dd>
             </div>
             <div>
               <dt>Inventory items</dt>
@@ -106,6 +120,7 @@ export function InventoryPage() {
                 <div key={slot} className="subpanel">
                   <strong>{slot}</strong>
                   <p className="muted">{item ? item.name : "Empty"}</p>
+                  <p className="meta">{item ? describeInventoryItemStats(item) : "No bonus active"}</p>
                   <button
                     className="button button-secondary"
                     disabled={!item || actionKey === `unequip-${slot}`}
@@ -128,42 +143,11 @@ export function InventoryPage() {
       </section>
 
       <section className="panel">
-        <p className="eyebrow">Shop</p>
-        <h2>Starter items</h2>
-        {isLoading ? (
-          <p className="muted">Loading shop...</p>
-        ) : (
-          <div className="card-grid">
-            {shopItems.map((item) => (
-              <article key={item.id} className="subpanel">
-                <h3>{item.name}</h3>
-                <p className="muted">
-                  {item.type} · {item.equipSlot}
-                </p>
-                <p className="price-tag">{formatMoney(item.price)}</p>
-                <button
-                  className="button"
-                  disabled={!accessToken || actionKey === `buy-${item.id}`}
-                  type="button"
-                  onClick={() =>
-                    accessToken
-                      ? void runAction(`buy-${item.id}`, () =>
-                          gameApi.inventory.purchase(accessToken, item.id).then(() => undefined)
-                        )
-                      : undefined
-                  }
-                >
-                  {actionKey === `buy-${item.id}` ? "Purchasing..." : "Buy"}
-                </button>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="panel">
         <p className="eyebrow">Owned items</p>
         <h2>Inventory</h2>
+        <p className="muted">
+          Need more gear? Visit the <Link href="/shop">shop</Link> for level-gated weapons and starter armor.
+        </p>
         {isLoading ? (
           <p className="muted">Loading inventory...</p>
         ) : inventory.length > 0 ? (
@@ -173,8 +157,9 @@ export function InventoryPage() {
                 <div>
                   <strong>{item.name}</strong>
                   <p className="muted">
-                    {item.type} · acquired {formatDateTime(item.acquiredAt)}
+                    {item.category} / {item.equipSlot} / acquired {formatDateTime(item.acquiredAt)}
                   </p>
+                  <p className="meta">{describeInventoryItemStats(item)}</p>
                   <p className="meta">
                     {item.marketListingId
                       ? "Locked by market listing"
@@ -189,6 +174,7 @@ export function InventoryPage() {
                     className="button button-secondary"
                     disabled={
                       !accessToken ||
+                      item.equipSlot !== "weapon" ||
                       item.marketListingId !== null ||
                       actionKey === `equip-weapon-${item.id}`
                     }
@@ -209,6 +195,7 @@ export function InventoryPage() {
                     className="button button-secondary"
                     disabled={
                       !accessToken ||
+                      item.equipSlot !== "armor" ||
                       item.marketListingId !== null ||
                       actionKey === `equip-armor-${item.id}`
                     }
@@ -230,7 +217,7 @@ export function InventoryPage() {
             ))}
           </ul>
         ) : (
-          <p className="muted">No owned items yet. Buy one from the starter shop.</p>
+          <p className="muted">No owned items yet. Buy your first weapon or armor from the shop.</p>
         )}
       </section>
     </AppShell>

@@ -1,4 +1,7 @@
 import type {
+  AdminBalanceAuditEntry,
+  AdminBalanceSectionKey,
+  AdminBalanceSectionView,
   CurrentSeasonResponse,
   AuthMeResponse,
   AuthSession,
@@ -26,6 +29,7 @@ import type {
   PlayerMission,
   PurchaseItemResult,
   Season,
+  StickyMenuConfig,
   ShopItem
 } from "./api-types";
 import { apiRequest } from "./api-client";
@@ -34,6 +38,61 @@ interface AuthCredentials {
   email: string;
   password: string;
 }
+
+interface AdminAuditQuery {
+  section?: AdminBalanceSectionKey;
+  targetId?: string;
+  limit?: number;
+}
+
+interface CreateSeasonInput {
+  name: string;
+  startsAt: string | null;
+  endsAt: string | null;
+}
+
+interface StickyMenuUpdateInput {
+  header: {
+    enabled: boolean;
+    resourceKeys: StickyMenuConfig["header"]["resourceKeys"];
+  };
+  primaryItems: StickyMenuConfig["primaryItems"];
+  moreItems: StickyMenuConfig["moreItems"];
+}
+
+type AdminBalanceUpdatePayload =
+  | {
+      section: "crimes";
+      body: {
+        crimes: Array<{
+          id: string;
+          energyCost: number;
+          successRate: number;
+          cashRewardMin: number;
+          cashRewardMax: number;
+          respectReward: number;
+        }>;
+      };
+    }
+  | {
+      section: "districts";
+      body: {
+        districts: Array<{
+          id: string;
+          payoutAmount: number;
+          payoutCooldownMinutes: number;
+        }>;
+      };
+    }
+  | {
+      section: "shop-items";
+      body: {
+        items: Array<{
+          id: string;
+          price: number;
+        }>;
+      };
+    };
 
 export const gameApi = {
   auth: {
@@ -77,8 +136,8 @@ export const gameApi = {
     }
   },
   inventory: {
-    listShopItems() {
-      return apiRequest<ShopItem[]>("/api/shop/items");
+    listShopItems(accessToken: string) {
+      return apiRequest<ShopItem[]>("/api/me/shop/items", { accessToken });
     },
     getCurrentInventory(accessToken: string) {
       return apiRequest<InventoryItem[]>("/api/me/inventory", { accessToken });
@@ -161,6 +220,11 @@ export const gameApi = {
     },
     listAll() {
       return apiRequest<Season[]>("/api/seasons");
+    }
+  },
+  stickyMenu: {
+    getConfig() {
+      return apiRequest<StickyMenuConfig>("/api/sticky-menu");
     }
   },
   gangs: {
@@ -258,6 +322,84 @@ export const gameApi = {
       return apiRequest<MarketListing>(`/api/market/listings/${listingId}/cancel`, {
         method: "POST",
         body: { playerId }
+      });
+    }
+  },
+  admin: {
+    listBalance(accessToken: string) {
+      return apiRequest<{ sections: AdminBalanceSectionView[] }>("/api/admin/balance", {
+        accessToken
+      });
+    },
+    listAudit(
+      accessToken: string,
+      query: AdminAuditQuery = {}
+    ) {
+      const searchParams = new URLSearchParams();
+
+      if (query.section) {
+        searchParams.set("section", query.section);
+      }
+
+      if (query.targetId) {
+        searchParams.set("targetId", query.targetId);
+      }
+
+      if (query.limit) {
+        searchParams.set("limit", String(query.limit));
+      }
+
+      const suffix = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
+
+      return apiRequest<{ entries: AdminBalanceAuditEntry[] }>(
+        `/api/admin/balance/audit${suffix}`,
+        {
+          accessToken
+        }
+      );
+    },
+    updateBalance(
+      payload: AdminBalanceUpdatePayload,
+      accessToken: string
+    ) {
+      return apiRequest<AdminBalanceSectionView>(
+        `/api/admin/balance/${payload.section}`,
+        {
+          method: "PATCH",
+          accessToken,
+          body: payload.body
+        }
+      );
+    },
+    createSeason(input: CreateSeasonInput, accessToken: string) {
+      return apiRequest<Season>("/api/admin/seasons", {
+        method: "POST",
+        accessToken,
+        body: input
+      });
+    },
+    activateSeason(seasonId: string, accessToken: string) {
+      return apiRequest<Season>(`/api/admin/seasons/${seasonId}/activate`, {
+        method: "POST",
+        accessToken
+      });
+    },
+    deactivateSeason(seasonId: string, accessToken: string) {
+      return apiRequest<Season>(`/api/admin/seasons/${seasonId}/deactivate`, {
+        method: "POST",
+        accessToken
+      });
+    },
+    getStickyMenu(accessToken: string) {
+      return apiRequest<StickyMenuConfig>("/api/admin/sticky-menu", {
+        accessToken
+      });
+    },
+    updateStickyMenu(input: StickyMenuUpdateInput, accessToken: string) {
+      return apiRequest<StickyMenuConfig>("/api/admin/sticky-menu", {
+        method: "PATCH",
+        accessToken,
+        body: input
       });
     }
   }

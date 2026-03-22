@@ -3,18 +3,17 @@
 ## Balance endpoints
 
 - `GET /api/admin/balance`
-  - header: `x-admin-token`
-  - response: `{ sections: [...] }`
+  - header: `Authorization: Bearer <token>`
+- response: `{ sections: [...] }`
 - `GET /api/admin/balance/:section`
-  - header: `x-admin-token`
+  - header: `Authorization: Bearer <token>`
   - supported sections: `crimes`, `districts`, `shop-items`
 - `GET /api/admin/balance/audit`
-  - header: `x-admin-token`
+  - header: `Authorization: Bearer <token>`
   - optional query params: `section`, `targetId`, `limit`
   - response: `{ entries: [...] }`
 - `PATCH /api/admin/balance/:section`
-  - header: `x-admin-token`
-  - optional auth: `Authorization: Bearer <token>`
+  - header: `Authorization: Bearer <token>`
   - updates only the explicit editable fields for that section
 
 ## Section payloads
@@ -26,8 +25,30 @@
 - `PATCH /api/admin/balance/shop-items`
   - request: `{ "items": [{ "id": "rusty-knife", "price": 450 }] }`
 
+## Sticky menu endpoints
+
+- `GET /api/sticky-menu`
+  - public read used by the gameplay shell
+- `GET /api/admin/sticky-menu`
+  - header: `Authorization: Bearer <token>`
+- `PATCH /api/admin/sticky-menu`
+  - header: `Authorization: Bearer <token>`
+  - request:
+    `{
+      "header": { "enabled": true, "resourceKeys": ["cash", "respect"] },
+      "primaryItems": ["home", "crimes", "missions", "shop", "more"],
+      "moreItems": ["business", "inventory", "activity", "achievements", "gangs", "territory", "market", "leaderboard"]
+    }`
+  - validation rules:
+    - primary items are capped at 5
+    - only known destination keys are allowed
+    - `more` may appear only in primary items
+    - `moreItems` requires `more` to be present in primary items
+    - the same destination cannot appear in both primary and More groups
+
 ## Temporary note
 
-- These endpoints use a temporary shared secret header because full RBAC is not implemented yet.
-- `ADMIN_API_KEY` must be configured or the endpoints stay disabled.
-- Audit rows write `changedByAccountId` only when a valid bearer-authenticated account is also present. Shared-secret-only requests still write audit rows with `changedByAccountId: null`.
+- These endpoints now require a valid authenticated session for an account with `isAdmin: true`.
+- `ADMIN_EMAILS` may be configured as a comma-separated bootstrap list for initial admin accounts.
+- Audit rows write `changedByAccountId` from the authenticated admin account.
+- Sticky menu reads are public because they expose only safe destination keys, not privileged state.

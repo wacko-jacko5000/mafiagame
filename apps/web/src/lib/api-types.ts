@@ -1,6 +1,7 @@
 export interface AuthenticatedAccount {
   id: string;
   email: string;
+  isAdmin: boolean;
   createdAt: string;
   updatedAt: string;
   player: {
@@ -22,7 +23,15 @@ export interface Player {
   id: string;
   displayName: string;
   cash: number;
-  respect: number;
+  level: number;
+  rank: string;
+  currentRespect: number;
+  currentLevelMinRespect: number;
+  nextLevel: number | null;
+  nextRank: string | null;
+  nextLevelRespectRequired: number | null;
+  respectToNextLevel: number | null;
+  progressPercent: number;
   energy: number;
   health: number;
   jailedUntil: string | null;
@@ -58,13 +67,31 @@ export interface CrimeExecutionResult {
 }
 
 export type EquipmentSlot = "weapon" | "armor";
+export type ShopItemCategory =
+  | "handguns"
+  | "smg"
+  | "assault_rifle"
+  | "sniper"
+  | "special"
+  | "armor";
 
 export interface ShopItem {
   id: string;
   name: string;
-  type: string;
+  type: "weapon" | "armor";
+  category: ShopItemCategory;
   price: number;
   equipSlot: EquipmentSlot;
+  unlockLevel: number;
+  unlockRank: string;
+  weaponStats: {
+    damageBonus: number;
+  } | null;
+  armorStats: {
+    damageReduction: number;
+  } | null;
+  isUnlocked: boolean;
+  isLocked: boolean;
 }
 
 export interface InventoryItem {
@@ -72,10 +99,19 @@ export interface InventoryItem {
   playerId: string;
   itemId: string;
   name: string;
-  type: string;
+  type: "weapon" | "armor";
+  category: ShopItemCategory;
   price: number;
+  equipSlot: EquipmentSlot;
+  unlockLevel: number;
   equippedSlot: EquipmentSlot | null;
   marketListingId: string | null;
+  weaponStats: {
+    damageBonus: number;
+  } | null;
+  armorStats: {
+    damageReduction: number;
+  } | null;
   acquiredAt: string;
 }
 
@@ -302,3 +338,96 @@ export interface MarketPurchaseResult {
   buyerCashAfterPurchase: number;
   sellerCashAfterSale: number;
 }
+
+export type AdminBalanceSectionKey = "crimes" | "districts" | "shop-items";
+
+export type StickyMenuDestinationKey =
+  | "home"
+  | "crimes"
+  | "missions"
+  | "shop"
+  | "business"
+  | "inventory"
+  | "activity"
+  | "achievements"
+  | "gangs"
+  | "territory"
+  | "market"
+  | "leaderboard"
+  | "more";
+
+export type StickyMenuLeafDestinationKey = Exclude<StickyMenuDestinationKey, "more">;
+export type StickyHeaderResourceKey = "cash" | "respect" | "energy" | "health" | "rank";
+
+export interface StickyMenuConfig {
+  header: {
+    enabled: boolean;
+    resourceKeys: StickyHeaderResourceKey[];
+  };
+  primaryItems: StickyMenuDestinationKey[];
+  moreItems: StickyMenuLeafDestinationKey[];
+  availableDestinationKeys: StickyMenuDestinationKey[];
+  availableHeaderResourceKeys: StickyHeaderResourceKey[];
+  maxPrimaryItems: number;
+}
+
+export interface AdminBalanceAuditEntry {
+  id: string;
+  section: AdminBalanceSectionKey;
+  targetId: string;
+  changedByAccountId: string | null;
+  previousValue: Record<string, number | string | null>;
+  newValue: Record<string, number | string | null>;
+  changedAt: string;
+}
+
+export interface CrimeBalanceEntry {
+  id: string;
+  name: string;
+  energyCost: number;
+  successRate: number;
+  cashRewardMin: number;
+  cashRewardMax: number;
+  respectReward: number;
+}
+
+export interface DistrictBalanceEntry {
+  id: string;
+  name: string;
+  payoutAmount: number;
+  payoutCooldownMinutes: number;
+}
+
+export interface ShopItemBalanceEntry {
+  id: string;
+  name: string;
+  type: string;
+  price: number;
+  equipSlot: string | null;
+}
+
+export type AdminBalanceSectionView =
+  | {
+      section: "crimes";
+      label: "Crime Catalog";
+      editableFields: readonly [
+        "energyCost",
+        "successRate",
+        "cashRewardMin",
+        "cashRewardMax",
+        "respectReward"
+      ];
+      entries: CrimeBalanceEntry[];
+    }
+  | {
+      section: "districts";
+      label: "District Payouts";
+      editableFields: readonly ["payoutAmount", "payoutCooldownMinutes"];
+      entries: DistrictBalanceEntry[];
+    }
+  | {
+      section: "shop-items";
+      label: "Starter Shop Items";
+      editableFields: readonly ["price"];
+      entries: ShopItemBalanceEntry[];
+    };

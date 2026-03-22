@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import type { CrimeDefinition, CrimeExecutionResult, Player } from "../lib/api-types";
+import type { CrimeDefinition, CrimeExecutionResult } from "../lib/api-types";
 import { ApiError } from "../lib/api-client";
 import {
   formatDateTime,
@@ -12,11 +12,12 @@ import {
 } from "../lib/formatters";
 import { gameApi } from "../lib/game-api";
 import { AppShell } from "./app-shell";
+import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
 
 export function CrimesPage() {
   const { accessToken, account } = useSession();
-  const [player, setPlayer] = useState<Player | null>(null);
+  const { player, refreshPlayer } = usePlayerState();
   const [crimes, setCrimes] = useState<CrimeDefinition[]>([]);
   const [result, setResult] = useState<CrimeExecutionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,13 +33,9 @@ export function CrimesPage() {
     setError(null);
 
     try {
-      const [nextCrimes, nextPlayer] = await Promise.all([
-        gameApi.crimes.list(),
-        gameApi.players.getById(account.player.id)
-      ]);
+      const nextCrimes = await gameApi.crimes.list();
 
       setCrimes(nextCrimes);
-      setPlayer(nextPlayer);
     } catch (nextError) {
       setError(
         nextError instanceof ApiError
@@ -64,14 +61,12 @@ export function CrimesPage() {
 
     try {
       const outcome = await gameApi.crimes.execute(accessToken, crimeId);
-      const nextPlayer = await gameApi.players.getById(account.player.id);
+      await refreshPlayer();
 
       setResult(outcome);
-      setPlayer(nextPlayer);
     } catch (nextError) {
       try {
-        const nextPlayer = await gameApi.players.getById(account.player.id);
-        setPlayer(nextPlayer);
+        await refreshPlayer();
       } catch {
         // Keep the original action error as the primary UI signal.
       }
@@ -101,8 +96,22 @@ export function CrimesPage() {
               <dd>{player ? formatMoney(player.cash) : "..."}</dd>
             </div>
             <div>
+              <dt>Rank</dt>
+              <dd>{player ? `Level ${player.level} - ${player.rank}` : "..."}</dd>
+            </div>
+            <div>
               <dt>Respect</dt>
-              <dd>{player?.respect ?? "..."}</dd>
+              <dd>{player?.currentRespect ?? "..."}</dd>
+            </div>
+            <div>
+              <dt>Progress</dt>
+              <dd>
+                {player
+                  ? player.nextLevel
+                    ? `${player.respectToNextLevel} to level ${player.nextLevel}`
+                    : "Max level"
+                  : "..."}
+              </dd>
             </div>
             <div>
               <dt>Energy</dt>

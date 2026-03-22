@@ -7,17 +7,17 @@
 - `stats`: derived values, health, stamina, heat, xp.
 - `notifications`: player activity feed, inbox, alerts, realtime fan-out.
 - `live-events`: scheduled and operator-driven event systems.
-- `admin-tools`: balancing, moderation, catalog management, operations.
+- `admin-tools`: balancing, moderation, catalog management, mobile shell configuration, and operations.
 - `seasons`: season lifecycle, current-season reads, and future seasonal attachment points.
 - `achievements`: static progression milestones and player unlock tracking.
 
 ## Risk and action systems
 
-- `crime`: primary solo action loop with catalog-driven starter crimes.
+- `crime`: primary solo action loop with a static 21-level crime catalog and backend level gating.
 - `combat`: PvP and PvE conflict resolution.
 - `jail`: arrest restrictions and release logic.
 - `hospital`: recovery restrictions and healing logic.
-- `missions`: curated goal loops and reward tracks.
+- `missions`: static 21-level mission catalog, accepted mission state, and backend level gating.
 
 ## Economy systems
 
