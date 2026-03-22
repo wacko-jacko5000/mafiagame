@@ -25,11 +25,18 @@ describe("inventory policy", () => {
         id: "owned-1",
         playerId: "player-1",
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: "weapon",
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
       }
     ]);
@@ -58,11 +65,18 @@ describe("inventory policy", () => {
         id: "owned-1",
         playerId: "player-1",
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: "weapon",
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
       },
       {
@@ -71,9 +85,16 @@ describe("inventory policy", () => {
         itemId: "leather-jacket",
         name: "Leather Jacket",
         type: "armor",
+        category: "armor",
         price: 950,
+        equipSlot: "armor",
+        unlockLevel: 1,
         equippedSlot: "armor",
         marketListingId: null,
+        weaponStats: null,
+        armorStats: {
+          damageReduction: 3
+        },
         acquiredAt: new Date("2026-03-16T20:01:00.000Z")
       }
     ]);

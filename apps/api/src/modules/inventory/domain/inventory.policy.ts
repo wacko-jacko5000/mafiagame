@@ -4,6 +4,8 @@ import type {
   EquippedInventory,
   InventoryListItem,
   ItemDefinition,
+  PlayerShopItem,
+  ShopCatalogItem,
   PlayerInventoryItemSnapshot
 } from "./inventory.types";
 
@@ -17,9 +19,14 @@ export function toInventoryListItem(
     itemId: item.id,
     name: item.name,
     type: item.type,
+    category: item.category,
     price: item.price,
+    equipSlot: item.equipSlot,
+    unlockLevel: item.unlockLevel,
     equippedSlot: ownedItem.equippedSlot,
     marketListingId: ownedItem.marketListingId,
+    weaponStats: item.weaponStats,
+    armorStats: item.armorStats,
     acquiredAt: ownedItem.acquiredAt
   };
 }
@@ -72,4 +79,36 @@ export function parseEquipmentSlot(slot: string): EquipmentSlot {
   }
 
   throw new Error(`Equipment slot "${slot}" is invalid.`);
+}
+
+export function toShopCatalogItem(
+  item: ItemDefinition,
+  unlockRank: string
+): ShopCatalogItem {
+  return {
+    id: item.id,
+    name: item.name,
+    type: item.type,
+    category: item.category,
+    price: item.price,
+    equipSlot: item.equipSlot,
+    unlockLevel: item.unlockLevel,
+    unlockRank,
+    weaponStats: item.weaponStats,
+    armorStats: item.armorStats
+  };
+}
+
+export function toPlayerShopItem(
+  item: ItemDefinition,
+  unlockRank: string,
+  playerLevel: number
+): PlayerShopItem {
+  const isUnlocked = playerLevel >= item.unlockLevel;
+
+  return {
+    ...toShopCatalogItem(item, unlockRank),
+    isUnlocked,
+    isLocked: !isUnlocked
+  };
 }

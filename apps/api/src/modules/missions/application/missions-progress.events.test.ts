@@ -52,22 +52,24 @@ describe("MissionsProgressEventsHandler", () => {
     expect(missionsService.recordProgress).toHaveBeenNthCalledWith(
       1,
       "player-1",
-      "commit_crime_n_times"
+      "crime_count"
     );
     expect(missionsService.recordProgress).toHaveBeenNthCalledWith(
       2,
       "player-2",
-      "buy_item_n_times"
+      "buy_items",
+      1,
+      { itemType: "weapon" }
     );
     expect(missionsService.recordProgress).toHaveBeenNthCalledWith(
       3,
       "player-3",
-      "win_combat_n_times"
+      "win_combat"
     );
     expect(missionsService.recordProgress).toHaveBeenNthCalledWith(
       4,
       "player-5",
-      "claim_district_once"
+      "control_districts"
     );
   });
 });

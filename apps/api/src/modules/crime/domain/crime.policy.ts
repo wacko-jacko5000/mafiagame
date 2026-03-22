@@ -20,9 +20,9 @@ export function resolveCrimeOutcome(
     };
   }
 
-  const rewardSpread = crime.cashRewardMax - crime.cashRewardMin;
+  const rewardSpread = crime.maxReward - crime.minReward;
   const clampedRoll = Math.min(Math.max(successRoll, 0), 1);
-  const cashAwarded = crime.cashRewardMin + Math.round(rewardSpread * clampedRoll);
+  const cashAwarded = crime.minReward + Math.round(rewardSpread * clampedRoll);
 
   return {
     crimeId: crime.id,

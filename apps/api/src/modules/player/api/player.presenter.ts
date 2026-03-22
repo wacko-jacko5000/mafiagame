@@ -1,4 +1,5 @@
 import type { PlayerSnapshot } from "../domain/player.types";
+import { derivePlayerProgression } from "../domain/player.policy";
 import type {
   PlayerResponseBody,
   PlayerResourcesResponseBody
@@ -7,11 +8,21 @@ import type {
 export function toPlayerResponseBody(
   player: PlayerSnapshot
 ): PlayerResponseBody {
+  const progression = derivePlayerProgression(player.respect);
+
   return {
     id: player.id,
     displayName: player.displayName,
     cash: player.cash,
-    respect: player.respect,
+    level: progression.level,
+    rank: progression.rank,
+    currentRespect: progression.currentRespect,
+    currentLevelMinRespect: progression.currentLevelMinRespect,
+    nextLevel: progression.nextLevel,
+    nextRank: progression.nextRank,
+    nextLevelRespectRequired: progression.nextLevelRespectRequired,
+    respectToNextLevel: progression.respectToNextLevel,
+    progressPercent: progression.progressPercent,
     energy: player.energy,
     health: player.health,
     jailedUntil: player.jailedUntil?.toISOString() ?? null,

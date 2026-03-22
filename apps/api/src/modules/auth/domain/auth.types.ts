@@ -7,6 +7,7 @@ export interface AccountSnapshot {
   id: string;
   email: string;
   passwordHash: string;
+  isAdmin: boolean;
   createdAt: Date;
   updatedAt: Date;
   player: AccountPlayerOwnership | null;
@@ -15,6 +16,7 @@ export interface AccountSnapshot {
 export interface AuthActor {
   accountId: string;
   email: string;
+  isAdmin: boolean;
   playerId: string | null;
 }
 

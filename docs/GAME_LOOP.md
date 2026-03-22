@@ -11,14 +11,15 @@
 
 ## Main progression loops
 
-- `crime -> money/heat/xp -> equipment/businesses -> stronger crime options`
+- `respect -> derived level/rank -> newly unlocked crime and mission catalogs`
+- `crime -> cash/respect -> derived level -> stronger crime options and mission access`
 - `crime -> failure consequence -> jail/hospital downtime -> delayed next action`
 - `crime -> cash -> starter shop purchases -> owned inventory`
 - `owned inventory -> equipped weapon/armor -> future combat readiness`
 - `combat -> target damage -> hospital downtime -> revenge or recovery pressure`
 - `combat -> hospital/jail/reputation -> revenge or deterrence`
 - `gangs -> territory control -> district wars -> later conflict and reward systems`
-- `missions -> directed goals -> cash/respect rewards -> clearer early progression`
+- `missions -> level-gated directed goals -> cash/respect rewards -> clearer progression pacing`
 - `live-events -> seasonal rewards -> leaderboard prestige`
 
 ## Failure loops

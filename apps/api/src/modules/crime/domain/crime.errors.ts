@@ -5,6 +5,13 @@ export class CrimeNotFoundError extends Error {
   }
 }
 
+export class CrimeLevelLockedError extends Error {
+  constructor(crimeName: string, unlockLevel: number) {
+    super(`Crime "${crimeName}" unlocks at level ${unlockLevel}.`);
+    this.name = "CrimeLevelLockedError";
+  }
+}
+
 export class InsufficientCrimeEnergyError extends Error {
   constructor(crimeId: string) {
     super(`Player does not have enough energy to execute "${crimeId}".`);

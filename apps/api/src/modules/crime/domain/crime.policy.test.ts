@@ -4,13 +4,17 @@ import { getCrimeById, starterCrimeCatalog } from "./crime.catalog";
 import { resolveCrimeOutcome } from "./crime.policy";
 
 describe("crime catalog", () => {
-  it("contains the starter crimes", () => {
-    expect(starterCrimeCatalog.map((crime) => crime.id)).toEqual([
-      "pickpocket",
-      "shoplift",
-      "steal-bike"
-    ]);
-    expect(getCrimeById("shoplift")?.name).toBe("Shoplift");
+  it("contains the full level-gated crime catalog", () => {
+    expect(starterCrimeCatalog).toHaveLength(84);
+    expect(starterCrimeCatalog[0]).toMatchObject({
+      id: "pickpocket",
+      unlockLevel: 1
+    });
+    expect(starterCrimeCatalog.at(-1)).toMatchObject({
+      id: "ultimate-power-play",
+      unlockLevel: 21
+    });
+    expect(getCrimeById("shoplift-candy")?.name).toBe("Shoplift Candy");
   });
 });
 
@@ -32,13 +36,13 @@ describe("resolveCrimeOutcome", () => {
   });
 
   it("returns a failure result without rewards when the roll fails", () => {
-    const crime = getCrimeById("steal-bike");
+    const crime = getCrimeById("mug-civilian");
 
     expect(crime).toBeDefined();
     expect(resolveCrimeOutcome(crime!, 0.9)).toEqual({
-      crimeId: "steal-bike",
+      crimeId: "mug-civilian",
       success: false,
-      energySpent: 20,
+      energySpent: 22,
       cashAwarded: 0,
       respectAwarded: 0,
       consequence: {

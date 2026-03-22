@@ -5,6 +5,7 @@ import {
   Injectable,
   UnauthorizedException
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 import {
   AUTH_REPOSITORY,
@@ -25,6 +26,7 @@ import {
   AUTH_SESSION_TTL_DAYS
 } from "../domain/auth.policy";
 import type {
+  AccountSnapshot,
   AuthActor,
   AuthenticatedSession,
   LoginCommand,
@@ -35,7 +37,9 @@ import type {
 export class AuthService {
   constructor(
     @Inject(AUTH_REPOSITORY)
-    private readonly authRepository: AuthRepository
+    private readonly authRepository: AuthRepository,
+    @Inject(ConfigService)
+    private readonly configService: ConfigService
   ) {}
 
   async register(command: RegisterAccountCommand): Promise<AuthenticatedSession> {
@@ -50,7 +54,8 @@ export class AuthService {
       const passwordHash = await hashPassword(command.password);
       const account = await this.authRepository.createAccount({
         email,
-        passwordHash
+        passwordHash,
+        isAdmin: this.isBootstrapAdminEmail(email)
       });
 
       return this.createSessionForAccount(account.id);
@@ -103,7 +108,13 @@ export class AuthService {
   }
 
   async getAccountById(accountId: string) {
-    return this.authRepository.findAccountById(accountId);
+    const account = await this.authRepository.findAccountById(accountId);
+
+    if (!account) {
+      return null;
+    }
+
+    return this.promoteBootstrapAdminIfNeeded(account);
   }
 
   async authenticate(accessToken: string): Promise<AuthActor | null> {
@@ -116,10 +127,13 @@ export class AuthService {
       return null;
     }
 
+    const nextAccount = await this.promoteBootstrapAdminIfNeeded(account);
+
     return {
-      accountId: account.id,
-      email: account.email,
-      playerId: account.player?.id ?? null
+      accountId: nextAccount.id,
+      email: nextAccount.email,
+      isAdmin: nextAccount.isAdmin,
+      playerId: nextAccount.player?.id ?? null
     };
   }
 
@@ -144,7 +158,34 @@ export class AuthService {
 
     return {
       accessToken,
-      account
+      account: await this.promoteBootstrapAdminIfNeeded(account)
     };
+  }
+
+  private isBootstrapAdminEmail(email: string): boolean {
+    return this.getBootstrapAdminEmails().includes(email);
+  }
+
+  private async promoteBootstrapAdminIfNeeded(
+    account: AccountSnapshot
+  ): Promise<AccountSnapshot> {
+    if (account.isAdmin || !this.isBootstrapAdminEmail(account.email)) {
+      return account;
+    }
+
+    return this.authRepository.markAccountAsAdmin(account.id);
+  }
+
+  private getBootstrapAdminEmails(): string[] {
+    const configuredEmails = this.configService.get<string>("ADMIN_EMAILS");
+
+    if (!configuredEmails) {
+      return [];
+    }
+
+    return configuredEmails
+      .split(",")
+      .map((entry) => entry.trim().toLowerCase())
+      .filter((entry) => entry.length > 0);
   }
 }

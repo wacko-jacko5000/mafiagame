@@ -3,10 +3,14 @@ export interface MissionDefinitionResponseBody {
   name: string;
   description: string;
   objectiveType: string;
+  unlockLevel: number;
+  requiredLevel: number;
+  target: number;
   objectiveTarget: number;
   rewardCash: number;
   rewardRespect: number;
   isRepeatable: boolean;
+  itemType?: "weapon" | "armor";
 }
 
 export interface PlayerMissionResponseBody {

@@ -8,6 +8,10 @@
   - `respect = 0`
   - `energy = 100`
   - `health = 100`
+- Respect is the authoritative progression resource in this phase.
+- Player level and rank are derived from total respect through the static player rank catalog.
+- Level is not stored as a second source of truth.
+- Rebalancing player progression thresholds or rank names must happen by editing the centralized player rank catalog.
 - Energy regeneration is player-owned and lazy in this phase:
   - `energyUpdatedAt` stores the last synchronized energy timestamp
   - energy regenerates at `+1` per elapsed minute

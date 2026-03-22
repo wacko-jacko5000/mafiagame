@@ -8,6 +8,7 @@ Own item catalogs, player-held items, equipment slots, and consumable use.
 
 - Track acquisition and removal of items.
 - Expose a centralized starter item catalog and player inventory reads.
+- Own the static weapon and armor unlock catalogs plus item-level unlock metadata used by the shop.
 - Persist editable starter shop prices while keeping item ids, names, slots, and combat metadata in the module catalog.
 - Orchestrate starter shop purchases while leaving cash persistence on `player`.
 - Own equipped-state reads and equip/unequip rules for owned items.
@@ -27,9 +28,11 @@ Own item catalogs, player-held items, equipment slots, and consumable use.
 ## Temporary note
 
 - This phase uses a small module-owned starter item catalog in the inventory module, with persisted price overrides hydrated at startup.
+- Weapon and armor unlock levels are static catalog data and are evaluated against player-owned derived level/rank reads at request time.
 - Owned items are stored one row per purchase in `player_inventory_items`.
 - Equipped state currently lives as a nullable slot on owned inventory rows.
 - A listed item is temporarily locked by a nullable market-listing reference on the owned inventory row.
+- Equip attempts are level-gated as well so traded items cannot bypass progression.
 - Item use, consumables, rarity, crafting, durability, ammo, and loadouts are intentionally left out for later.
 
 ## Events
@@ -40,6 +43,7 @@ Own item catalogs, player-held items, equipment slots, and consumable use.
 ## API surface
 
 - Shop item reads
+- Player-aware shop item reads with unlock state
 - Player inventory reads
 - Starter item purchase command
 - Equipped item reads
@@ -48,6 +52,7 @@ Own item catalogs, player-held items, equipment slots, and consumable use.
 ## Test expectations
 
 - Ownership rules
+- Level-gated purchase rules
 - Atomic purchase behavior
 - Insufficient cash handling
 - Equipment slot validation

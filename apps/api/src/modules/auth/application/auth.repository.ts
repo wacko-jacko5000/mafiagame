@@ -5,6 +5,7 @@ export const AUTH_REPOSITORY = Symbol("AUTH_REPOSITORY");
 export interface CreateAccountValues {
   email: string;
   passwordHash: string;
+  isAdmin: boolean;
 }
 
 export interface CreateSessionValues {
@@ -18,6 +19,7 @@ export interface AuthRepository {
   createSession(values: CreateSessionValues): Promise<void>;
   findAccountByEmail(email: string): Promise<AccountSnapshot | null>;
   findAccountById(accountId: string): Promise<AccountSnapshot | null>;
+  markAccountAsAdmin(accountId: string): Promise<AccountSnapshot>;
   findAccountByActiveSessionTokenHash(
     tokenHash: string,
     now: Date

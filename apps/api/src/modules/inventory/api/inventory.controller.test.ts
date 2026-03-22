@@ -14,6 +14,7 @@ describe("InventoryController", () => {
     getEquippedItems: vi.fn(),
     equipItem: vi.fn(),
     listShopItems: vi.fn(),
+    listShopItemsForPlayer: vi.fn(),
     listPlayerInventory: vi.fn(),
     purchaseItem: vi.fn(),
     unequipSlot: vi.fn()
@@ -52,10 +53,13 @@ describe("InventoryController", () => {
     vi.mocked(inventoryService.listShopItems).mockReturnValueOnce([
       {
         id: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
-        equipSlot: "weapon"
+        equipSlot: "weapon",
+        unlockLevel: 1,
+        unlockRank: "Scum"
       }
     ]);
 
@@ -64,10 +68,56 @@ describe("InventoryController", () => {
     expect(response.body).toEqual([
       {
         id: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
-        equipSlot: "weapon"
+        equipSlot: "weapon",
+        unlockLevel: 1,
+        unlockRank: "Scum"
+      }
+    ]);
+  });
+
+  it("lists player-aware shop items for the authenticated player", async () => {
+    const playerId = crypto.randomUUID();
+    vi.mocked(authService.authenticate).mockResolvedValueOnce({
+      accountId: crypto.randomUUID(),
+      email: "test@example.com",
+      playerId
+    });
+    vi.mocked(inventoryService.listShopItemsForPlayer).mockResolvedValueOnce([
+      {
+        id: "beretta-92fs",
+        name: "Beretta 92FS",
+        type: "weapon",
+        category: "handguns",
+        price: 2400,
+        equipSlot: "weapon",
+        unlockLevel: 2,
+        unlockRank: "Empty Suit",
+        isUnlocked: false,
+        isLocked: true
+      }
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get("/me/shop/items")
+      .set("Authorization", "Bearer token-123")
+      .expect(200);
+
+    expect(response.body).toEqual([
+      {
+        id: "beretta-92fs",
+        name: "Beretta 92FS",
+        type: "weapon",
+        category: "handguns",
+        price: 2400,
+        equipSlot: "weapon",
+        unlockLevel: 2,
+        unlockRank: "Empty Suit",
+        isUnlocked: false,
+        isLocked: true
       }
     ]);
   });
@@ -79,7 +129,7 @@ describe("InventoryController", () => {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
         price: 400,
         equippedSlot: null,
@@ -94,7 +144,7 @@ describe("InventoryController", () => {
 
     expect(response.body[0]).toMatchObject({
         itemId: "rusty-knife",
-        name: "Rusty Knife"
+        name: "Glock 17"
       });
   });
 
@@ -105,7 +155,7 @@ describe("InventoryController", () => {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
         price: 400,
         equippedSlot: "weapon",
@@ -124,7 +174,7 @@ describe("InventoryController", () => {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
         price: 400,
         equippedSlot: "weapon",
@@ -143,7 +193,7 @@ describe("InventoryController", () => {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
         price: 400,
         equippedSlot: null,
@@ -162,7 +212,7 @@ describe("InventoryController", () => {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
         price: 400,
         equippedSlot: null,
@@ -179,7 +229,7 @@ describe("InventoryController", () => {
       id: inventoryItemId,
       playerId,
       itemId: "rusty-knife",
-      name: "Rusty Knife",
+      name: "Glock 17",
       type: "weapon",
       price: 400,
       equippedSlot: "weapon",
@@ -200,7 +250,7 @@ describe("InventoryController", () => {
       id: "owned-1",
       playerId,
       itemId: "rusty-knife",
-      name: "Rusty Knife",
+      name: "Glock 17",
       type: "weapon",
       price: 400,
       equippedSlot: null,
@@ -228,7 +278,7 @@ describe("InventoryController", () => {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
         price: 400,
         equippedSlot: null,

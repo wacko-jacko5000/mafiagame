@@ -7,9 +7,11 @@ import {
 } from "@nestjs/common";
 
 import {
+  derivePlayerProgression,
   buildInitialPlayerValues,
   normalizeDisplayName
 } from "../domain/player.policy";
+import { getPlayerRankByLevel } from "../domain/player-rank.catalog";
 import {
   AccountAlreadyHasPlayerError,
   InvalidPlayerDisplayNameError,
@@ -20,6 +22,7 @@ import {
 import type {
   CreatePlayerCommand,
   PlayerCustodyStatusUpdate,
+  PlayerProgressionSnapshot,
   PlayerResourceDelta,
   PlayerResources,
   PlayerSnapshot
@@ -106,6 +109,15 @@ export class PlayerService {
       energy: player.energy,
       health: player.health
     };
+  }
+
+  async getPlayerProgression(playerId: string): Promise<PlayerProgressionSnapshot> {
+    const player = await this.getPlayerById(playerId);
+    return derivePlayerProgression(player.respect);
+  }
+
+  getRankNameForLevel(level: number): string | null {
+    return getPlayerRankByLevel(level)?.rank ?? null;
   }
 
   async applyResourceDelta(

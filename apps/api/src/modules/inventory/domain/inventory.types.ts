@@ -1,13 +1,31 @@
 export type EquipmentSlot = "weapon" | "armor";
+export type ItemType = "weapon" | "armor";
+export type ShopItemCategory =
+  | "handguns"
+  | "smg"
+  | "assault_rifle"
+  | "sniper"
+  | "special"
+  | "armor";
+
+export interface WeaponItemStats {
+  damageBonus: number;
+}
+
+export interface ArmorItemStats {
+  damageReduction: number;
+}
 
 export interface ItemDefinition {
   id: string;
   name: string;
-  type: string;
+  type: ItemType;
+  category: ShopItemCategory;
   price: number;
   equipSlot: EquipmentSlot;
-  combatAttackBonus: number;
-  combatDefenseBonus: number;
+  unlockLevel: number;
+  weaponStats: WeaponItemStats | null;
+  armorStats: ArmorItemStats | null;
 }
 
 export interface PlayerInventoryItemSnapshot {
@@ -26,10 +44,15 @@ export interface InventoryListItem {
   playerId: string;
   itemId: string;
   name: string;
-  type: string;
+  type: ItemType;
+  category: ShopItemCategory;
   price: number;
+  equipSlot: EquipmentSlot;
+  unlockLevel: number;
   equippedSlot: EquipmentSlot | null;
   marketListingId: string | null;
+  weaponStats: WeaponItemStats | null;
+  armorStats: ArmorItemStats | null;
   acquiredAt: Date;
 }
 
@@ -41,6 +64,24 @@ export interface PurchaseInventoryItemCommand {
 export interface PurchaseInventoryItemResult {
   playerCashAfterPurchase: number;
   ownedItem: InventoryListItem;
+}
+
+export interface ShopCatalogItem {
+  id: string;
+  name: string;
+  type: ItemType;
+  category: ShopItemCategory;
+  price: number;
+  equipSlot: EquipmentSlot;
+  unlockLevel: number;
+  unlockRank: string;
+  weaponStats: WeaponItemStats | null;
+  armorStats: ArmorItemStats | null;
+}
+
+export interface PlayerShopItem extends ShopCatalogItem {
+  isUnlocked: boolean;
+  isLocked: boolean;
 }
 
 export interface EquipInventoryItemCommand {

@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { AdminToolsModule } from "../admin-tools/admin-tools.module";
+import { AuthModule } from "../auth/auth.module";
 import { SEASONS_REPOSITORY } from "./application/seasons.repository";
 import { SeasonsService } from "./application/seasons.service";
 import {
@@ -10,7 +11,7 @@ import {
 import { PrismaSeasonsRepository } from "./infrastructure/prisma-seasons.repository";
 
 @Module({
-  imports: [AdminToolsModule],
+  imports: [AuthModule, AdminToolsModule],
   controllers: [SeasonsController, AdminSeasonsController],
   providers: [
     SeasonsService,

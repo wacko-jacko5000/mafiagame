@@ -11,6 +11,7 @@ function toAuthenticatedAccountResponseBody(
   return {
     id: account.id,
     email: account.email,
+    isAdmin: account.isAdmin,
     createdAt: account.createdAt.toISOString(),
     updatedAt: account.updatedAt.toISOString(),
     player: account.player

@@ -1,5 +1,4 @@
 import { INestApplication } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -32,13 +31,27 @@ describe("AdminBalanceController", () => {
         {
           provide: AuthService,
           useValue: {
-            authenticate: vi.fn()
-          }
-        },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: vi.fn().mockReturnValue("test-admin-token")
+            authenticate: vi.fn((token: string) => {
+              if (token === "admin-token") {
+                return {
+                  accountId: crypto.randomUUID(),
+                  email: "boss@example.com",
+                  isAdmin: true,
+                  playerId: null
+                };
+              }
+
+              if (token === "user-token") {
+                return {
+                  accountId: crypto.randomUUID(),
+                  email: "user@example.com",
+                  isAdmin: false,
+                  playerId: null
+                };
+              }
+
+              return null;
+            })
           }
         }
       ]
@@ -54,8 +67,15 @@ describe("AdminBalanceController", () => {
     }
   });
 
-  it("rejects requests without the admin token", async () => {
+  it("rejects requests without authentication", async () => {
     await request(app.getHttpServer()).get("/admin/balance").expect(401);
+  });
+
+  it("rejects authenticated non-admin accounts", async () => {
+    await request(app.getHttpServer())
+      .get("/admin/balance")
+      .set("Authorization", "Bearer user-token")
+      .expect(401);
   });
 
   it("lists all balance sections when authorized", async () => {
@@ -76,7 +96,7 @@ describe("AdminBalanceController", () => {
 
     const response = await request(app.getHttpServer())
       .get("/admin/balance")
-      .set("x-admin-token", "test-admin-token")
+      .set("Authorization", "Bearer admin-token")
       .expect(200);
 
     expect(response.body).toEqual({
@@ -118,7 +138,7 @@ describe("AdminBalanceController", () => {
 
     const response = await request(app.getHttpServer())
       .get("/admin/balance/audit")
-      .set("x-admin-token", "test-admin-token")
+      .set("Authorization", "Bearer admin-token")
       .expect(200);
 
     expect(response.body.entries).toHaveLength(1);
@@ -137,7 +157,7 @@ describe("AdminBalanceController", () => {
       entries: [
         {
           id: "rusty-knife",
-          name: "Rusty Knife",
+          name: "Glock 17",
           type: "weapon",
           price: 450,
           equipSlot: "weapon"
@@ -147,7 +167,7 @@ describe("AdminBalanceController", () => {
 
     const response = await request(app.getHttpServer())
       .patch("/admin/balance/shop-items")
-      .set("x-admin-token", "test-admin-token")
+      .set("Authorization", "Bearer admin-token")
       .send({
         items: [
           {
@@ -165,7 +185,7 @@ describe("AdminBalanceController", () => {
           price: 450
         }
       ]
-    }, null);
+    }, expect.any(String));
     expect(response.body.entries[0]).toMatchObject({
       id: "rusty-knife",
       price: 450

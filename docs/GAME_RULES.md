@@ -29,15 +29,28 @@
 - Initial player resource values must be explicit and owned by the player module until a dedicated stats/economy split exists.
 - Player creation inputs must not accept client-supplied authoritative resource values.
 - Cash persistence remains player-owned in this phase even when other modules cause debits.
+- Respect is the authoritative progression resource for player level/rank in this phase.
+- Player level/rank must be derived from a centralized player-owned rank catalog, not persisted as a second primary progression field.
+- Crime and mission unlock gating must use the player module's derived level from respect, not separate persisted unlock state.
 - Energy regeneration is lazy and request-driven in this phase, using a player-owned sync timestamp instead of workers or cron jobs.
 
 ## Crime foundation rules
 
 - Crime definitions must live in a centralized backend-owned catalog.
+- Crime progression is defined as 4 explicit crimes per level across the current 21-level rank catalog.
 - Crime attempts consume energy whether they succeed or fail, after first synchronizing lazy energy regeneration.
 - Success may award cash and respect.
 - Failure may explicitly resolve to `none`, `jail`, or `hospital` based on the crime catalog.
 - Crime execution is blocked while an active jail or hospital timer exists.
+
+## Missions foundation rules
+
+- Mission definitions must live in a centralized backend-owned catalog.
+- Mission progression is defined as 3 explicit missions per level across the current 21-level rank catalog.
+- Mission unlock checks must use the player's derived level from respect at accept time.
+- Mission rewards must be explicit catalog data, not hidden formulas.
+- Mission objective progress may come from explicit in-process events or direct reads of current module-owned state when the objective is inherently state-based.
+- Generic quest engines, mission chains, branching narrative logic, and reset systems remain out of scope for this phase.
 
 ## Temporary custody and recovery model
 
@@ -50,6 +63,8 @@
 ## Starter inventory and shop model
 
 - Starter item definitions live in a centralized backend-owned catalog inside `inventory`.
+- Weapon unlock levels are static item catalog data inside `inventory`.
+- Shop visibility and purchase eligibility use player-owned derived level/rank from respect; unlock state is not persisted separately.
 - Player-owned items are persisted separately from `Player` in an inventory ownership table.
 - Shop purchases must atomically debit player cash and create item ownership.
 - Combat bonuses, item usage, trading, black market flows, consumables, rarity, and crafting remain out of scope for this phase.

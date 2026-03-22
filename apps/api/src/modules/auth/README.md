@@ -10,6 +10,7 @@ Own identity, sessions, and authorization boundaries for the platform.
 - Issue revocable bearer-backed sessions for prototype and early alpha use.
 - Separate platform account identity from game-specific player state.
 - Resolve authenticated account and current-player ownership for downstream modules.
+- Persist account-level admin role state for protected operator routes.
 
 ## Entities and value objects
 
@@ -34,9 +35,11 @@ Own identity, sessions, and authorization boundaries for the platform.
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `AuthGuard` / `OptionalAuthGuard` for downstream controllers
+- `ADMIN_EMAILS` bootstrap promotion for initial admin accounts
 
 ## Test expectations
 
 - Credential validation and password hashing
 - Duplicate registration and invalid credential rejection
 - Authenticated account resolution and current-player visibility
+- Admin-role exposure on authenticated account responses and actor resolution

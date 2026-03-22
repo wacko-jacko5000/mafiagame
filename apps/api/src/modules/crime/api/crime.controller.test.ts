@@ -17,6 +17,7 @@ describe("CrimeController", () => {
   let app: INestApplication;
   const playerService = {
     getPlayerById: vi.fn(),
+    getPlayerByIdAt: vi.fn(),
     applyResourceDelta: vi.fn()
   };
   const jailService = {
@@ -65,8 +66,7 @@ describe("CrimeController", () => {
           useValue: () => 0.3
         }
       ]
-    })
-      .compile();
+    }).compile();
 
     app = moduleRef.createNestApplication();
     await app.init();
@@ -81,9 +81,13 @@ describe("CrimeController", () => {
   it("lists available crimes", async () => {
     const response = await request(app.getHttpServer()).get("/crimes").expect(200);
 
-    expect(response.body).toHaveLength(3);
+    expect(response.body).toHaveLength(84);
     expect(response.body[0]).toMatchObject({
-      id: "pickpocket"
+      id: "pickpocket",
+      unlockLevel: 1,
+      requiredLevel: 1,
+      minReward: 50,
+      maxReward: 120
     });
   });
 
@@ -101,7 +105,7 @@ describe("CrimeController", () => {
       until: null,
       remainingSeconds: 0
     });
-    vi.mocked(playerService.getPlayerById).mockResolvedValueOnce({
+    vi.mocked(playerService.getPlayerByIdAt).mockResolvedValueOnce({
       id: playerId,
       accountId: null,
       displayName: "Don Luca",
@@ -118,7 +122,7 @@ describe("CrimeController", () => {
       id: playerId,
       accountId: null,
       displayName: "Don Luca",
-      cash: 2700,
+      cash: 2600,
       respect: 1,
       energy: 90,
       health: 100,
@@ -143,12 +147,6 @@ describe("CrimeController", () => {
     });
   });
 
-  it("rejects invalid player ids", async () => {
-    await request(app.getHttpServer())
-      .post("/players/not-a-uuid/crimes/pickpocket/execute")
-      .expect(400);
-  });
-
   it("executes a crime for the authenticated player", async () => {
     const playerId = crypto.randomUUID();
     vi.mocked(authService.authenticate).mockResolvedValueOnce({
@@ -168,7 +166,7 @@ describe("CrimeController", () => {
       until: null,
       remainingSeconds: 0
     });
-    vi.mocked(playerService.getPlayerById).mockResolvedValueOnce({
+    vi.mocked(playerService.getPlayerByIdAt).mockResolvedValueOnce({
       id: playerId,
       accountId: null,
       displayName: "Don Luca",
@@ -185,7 +183,7 @@ describe("CrimeController", () => {
       id: playerId,
       accountId: null,
       displayName: "Don Luca",
-      cash: 2700,
+      cash: 2600,
       respect: 1,
       energy: 90,
       health: 100,

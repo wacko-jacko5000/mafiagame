@@ -15,6 +15,8 @@ export interface UpdateCrimeBalanceInput {
   id: string;
   energyCost?: number;
   successRate?: number;
+  minReward?: number;
+  maxReward?: number;
   cashRewardMin?: number;
   cashRewardMax?: number;
   respectReward?: number;
@@ -53,8 +55,8 @@ export class CrimeBalanceService implements OnModuleInit {
       applyCrimeBalanceOverride(balance.crimeId, {
         energyCost: balance.energyCost,
         successRate: balance.successRate,
-        cashRewardMin: balance.cashRewardMin,
-        cashRewardMax: balance.cashRewardMax,
+        minReward: balance.cashRewardMin,
+        maxReward: balance.cashRewardMax,
         respectReward: balance.respectReward
       });
     }
@@ -78,8 +80,8 @@ export class CrimeBalanceService implements OnModuleInit {
         ...crime,
         energyCost: update.energyCost ?? crime.energyCost,
         successRate: update.successRate ?? crime.successRate,
-        cashRewardMin: update.cashRewardMin ?? crime.cashRewardMin,
-        cashRewardMax: update.cashRewardMax ?? crime.cashRewardMax,
+        minReward: update.minReward ?? update.cashRewardMin ?? crime.minReward,
+        maxReward: update.maxReward ?? update.cashRewardMax ?? crime.maxReward,
         respectReward: update.respectReward ?? crime.respectReward
       };
 
@@ -97,21 +99,21 @@ export class CrimeBalanceService implements OnModuleInit {
       }
 
       assertNonNegativeInteger(
-        nextCrime.cashRewardMin,
-        `Crime "${crime.id}" cashRewardMin`
+        nextCrime.minReward,
+        `Crime "${crime.id}" minReward`
       );
       assertNonNegativeInteger(
-        nextCrime.cashRewardMax,
-        `Crime "${crime.id}" cashRewardMax`
+        nextCrime.maxReward,
+        `Crime "${crime.id}" maxReward`
       );
       assertNonNegativeInteger(
         nextCrime.respectReward,
         `Crime "${crime.id}" respectReward`
       );
 
-      if (nextCrime.cashRewardMin > nextCrime.cashRewardMax) {
+      if (nextCrime.minReward > nextCrime.maxReward) {
         throw new BadRequestException(
-          `Crime "${crime.id}" cashRewardMin must be less than or equal to cashRewardMax.`
+          `Crime "${crime.id}" minReward must be less than or equal to maxReward.`
         );
       }
 
@@ -119,16 +121,16 @@ export class CrimeBalanceService implements OnModuleInit {
         crimeId: crime.id,
         energyCost: nextCrime.energyCost,
         successRate: nextCrime.successRate,
-        cashRewardMin: nextCrime.cashRewardMin,
-        cashRewardMax: nextCrime.cashRewardMax,
+        cashRewardMin: nextCrime.minReward,
+        cashRewardMax: nextCrime.maxReward,
         respectReward: nextCrime.respectReward
       });
 
       applyCrimeBalanceOverride(crime.id, {
         energyCost: nextCrime.energyCost,
         successRate: nextCrime.successRate,
-        cashRewardMin: nextCrime.cashRewardMin,
-        cashRewardMax: nextCrime.cashRewardMax,
+        minReward: nextCrime.minReward,
+        maxReward: nextCrime.maxReward,
         respectReward: nextCrime.respectReward
       });
     }

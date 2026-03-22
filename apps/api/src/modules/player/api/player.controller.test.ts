@@ -75,7 +75,15 @@ describe("PlayerController", () => {
       id: playerId,
       displayName: "Don Luca",
       cash: 2500,
-      respect: 0,
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0,
       energy: 100,
       health: 100,
       jailedUntil: null,
@@ -107,6 +115,9 @@ describe("PlayerController", () => {
 
     expect(response.body.id).toBe(playerId);
     expect(response.body.displayName).toBe("Don Luca");
+    expect(response.body.level).toBe(1);
+    expect(response.body.rank).toBe("Scum");
+    expect(response.body.currentRespect).toBe(0);
   });
 
   it("fetches player resources", async () => {

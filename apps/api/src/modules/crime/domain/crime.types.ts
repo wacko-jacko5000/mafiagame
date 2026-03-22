@@ -1,3 +1,5 @@
+export type CrimeDifficulty = "easy" | "medium" | "hard" | "very_hard";
+
 export type CrimeFailureConsequence =
   | {
       type: "none";
@@ -14,10 +16,12 @@ export type CrimeFailureConsequence =
 export interface CrimeDefinition {
   id: string;
   name: string;
+  unlockLevel: number;
+  difficulty: CrimeDifficulty;
   energyCost: number;
   successRate: number;
-  cashRewardMin: number;
-  cashRewardMax: number;
+  minReward: number;
+  maxReward: number;
   respectReward: number;
   failureConsequence: CrimeFailureConsequence;
 }

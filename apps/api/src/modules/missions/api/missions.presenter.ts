@@ -17,10 +17,14 @@ export function toMissionDefinitionResponseBody(
     name: mission.name,
     description: mission.description,
     objectiveType: mission.objectiveType,
-    objectiveTarget: mission.objectiveTarget,
+    unlockLevel: mission.unlockLevel,
+    requiredLevel: mission.unlockLevel,
+    target: mission.target,
+    objectiveTarget: mission.target,
     rewardCash: mission.rewardCash,
     rewardRespect: mission.rewardRespect,
-    isRepeatable: mission.isRepeatable
+    isRepeatable: mission.isRepeatable,
+    itemType: mission.itemType
   };
 }
 

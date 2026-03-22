@@ -6,7 +6,8 @@ const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1),
-  ADMIN_API_KEY: z.string().min(1).optional()
+  ADMIN_API_KEY: z.string().min(1).optional(),
+  ADMIN_EMAILS: z.string().optional()
 });
 
 export type RuntimeEnv = z.infer<typeof envSchema>;

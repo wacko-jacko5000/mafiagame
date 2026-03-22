@@ -4,6 +4,12 @@ export class MissionNotFoundError extends Error {
   }
 }
 
+export class MissionLevelLockedError extends Error {
+  constructor(missionName: string, unlockLevel: number) {
+    super(`Mission "${missionName}" unlocks at level ${unlockLevel}.`);
+  }
+}
+
 export class MissionAlreadyActiveError extends Error {
   constructor(missionId: string) {
     super(`Mission "${missionId}" is already active for this player.`);

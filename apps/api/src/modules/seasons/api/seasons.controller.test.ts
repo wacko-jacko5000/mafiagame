@@ -1,10 +1,10 @@
 import { INestApplication } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AdminApiKeyGuard } from "../../admin-tools/api/admin-api-key.guard";
+import { AuthService } from "../../auth/application/auth.service";
 import { SeasonsService } from "../application/seasons.service";
 import {
   AdminSeasonsController,
@@ -32,9 +32,29 @@ describe("SeasonsController", () => {
           useValue: seasonsService
         },
         {
-          provide: ConfigService,
+          provide: AuthService,
           useValue: {
-            get: vi.fn().mockReturnValue("test-admin-token")
+            authenticate: vi.fn((token: string) => {
+              if (token === "admin-token") {
+                return {
+                  accountId: crypto.randomUUID(),
+                  email: "boss@example.com",
+                  isAdmin: true,
+                  playerId: null
+                };
+              }
+
+              if (token === "user-token") {
+                return {
+                  accountId: crypto.randomUUID(),
+                  email: "user@example.com",
+                  isAdmin: false,
+                  playerId: null
+                };
+              }
+
+              return null;
+            })
           }
         }
       ]
@@ -144,8 +164,16 @@ describe("SeasonsController", () => {
     });
   });
 
-  it("rejects admin season creation without the admin token", async () => {
+  it("rejects admin season creation without authentication", async () => {
     await request(app.getHttpServer()).post("/admin/seasons").send({}).expect(401);
+  });
+
+  it("rejects admin season creation for non-admin accounts", async () => {
+    await request(app.getHttpServer())
+      .post("/admin/seasons")
+      .set("Authorization", "Bearer user-token")
+      .send({})
+      .expect(401);
   });
 
   it("creates a season through the admin route", async () => {
@@ -163,7 +191,7 @@ describe("SeasonsController", () => {
 
     const response = await request(app.getHttpServer())
       .post("/admin/seasons")
-      .set("x-admin-token", "test-admin-token")
+      .set("Authorization", "Bearer admin-token")
       .send({
         name: "Spring Season",
         startsAt: "2026-04-01T00:00:00.000Z",
@@ -198,7 +226,7 @@ describe("SeasonsController", () => {
 
     const response = await request(app.getHttpServer())
       .post(`/admin/seasons/${seasonId}/activate`)
-      .set("x-admin-token", "test-admin-token")
+      .set("Authorization", "Bearer admin-token")
       .expect(201);
 
     expect(seasonsService.activateSeason).toHaveBeenCalledWith(seasonId);
@@ -220,7 +248,7 @@ describe("SeasonsController", () => {
 
     const response = await request(app.getHttpServer())
       .post(`/admin/seasons/${seasonId}/deactivate`)
-      .set("x-admin-token", "test-admin-token")
+      .set("Authorization", "Bearer admin-token")
       .expect(201);
 
     expect(seasonsService.deactivateSeason).toHaveBeenCalledWith(seasonId);

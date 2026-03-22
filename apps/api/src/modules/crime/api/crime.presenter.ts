@@ -10,10 +10,15 @@ export function toCrimeListItemResponseBody(
   return {
     id: crime.id,
     name: crime.name,
+    unlockLevel: crime.unlockLevel,
+    requiredLevel: crime.unlockLevel,
+    difficulty: crime.difficulty,
     energyCost: crime.energyCost,
     successRate: crime.successRate,
-    cashRewardMin: crime.cashRewardMin,
-    cashRewardMax: crime.cashRewardMax,
+    minReward: crime.minReward,
+    maxReward: crime.maxReward,
+    cashRewardMin: crime.minReward,
+    cashRewardMax: crime.maxReward,
     respectReward: crime.respectReward,
     failureConsequence:
       crime.failureConsequence.type === "none"

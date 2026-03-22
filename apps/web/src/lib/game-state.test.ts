@@ -166,9 +166,16 @@ describe("game-state helpers", () => {
         itemId: "weapon-1",
         name: "Knife",
         type: "weapon",
+        category: "handguns",
         price: 100,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: "2026-03-18T00:00:00.000Z"
       },
       {
@@ -177,9 +184,16 @@ describe("game-state helpers", () => {
         itemId: "armor-1",
         name: "Vest",
         type: "armor",
+        category: "armor",
         price: 200,
+        equipSlot: "armor",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: "listing-1",
+        weaponStats: null,
+        armorStats: {
+          damageReduction: 3
+        },
         acquiredAt: "2026-03-18T00:00:00.000Z"
       }
     ];

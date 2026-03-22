@@ -160,8 +160,8 @@ export class AdminBalanceService {
           name: crime.name,
           energyCost: crime.energyCost,
           successRate: crime.successRate,
-          cashRewardMin: crime.cashRewardMin,
-          cashRewardMax: crime.cashRewardMax,
+          cashRewardMin: crime.minReward,
+          cashRewardMax: crime.maxReward,
           respectReward: crime.respectReward
         }))
       };

@@ -1,4 +1,5 @@
 import { ConflictException, UnauthorizedException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { describe, expect, it, vi } from "vitest";
 
 import { AuthService } from "./auth.service";
@@ -10,6 +11,7 @@ function createRepositoryMock(): AuthRepository {
     createSession: vi.fn(),
     findAccountByEmail: vi.fn(),
     findAccountById: vi.fn(),
+    markAccountAsAdmin: vi.fn(),
     findAccountByActiveSessionTokenHash: vi.fn()
   };
 }
@@ -23,6 +25,7 @@ describe("AuthService", () => {
       id: accountId,
       email: "test@example.com",
       passwordHash: "stored-hash",
+      isAdmin: false,
       createdAt: new Date("2026-03-18T20:00:00.000Z"),
       updatedAt: new Date("2026-03-18T20:00:00.000Z"),
       player: null
@@ -31,17 +34,23 @@ describe("AuthService", () => {
       id: accountId,
       email: "test@example.com",
       passwordHash: "stored-hash",
+      isAdmin: false,
       createdAt: new Date("2026-03-18T20:00:00.000Z"),
       updatedAt: new Date("2026-03-18T20:00:00.000Z"),
       player: null
     });
 
-    const service = new AuthService(repository);
+    const service = new AuthService(repository, {
+      get: vi.fn().mockReturnValue(undefined)
+    } as unknown as ConfigService);
     const result = await service.register({
       email: "test@example.com",
       password: "password123"
     });
 
+    expect(repository.createAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ isAdmin: false })
+    );
     expect(result.accessToken).toHaveLength(64);
     expect(repository.createSession).toHaveBeenCalledOnce();
     expect(result.account.email).toBe("test@example.com");
@@ -53,12 +62,15 @@ describe("AuthService", () => {
       id: crypto.randomUUID(),
       email: "test@example.com",
       passwordHash: "stored-hash",
+      isAdmin: false,
       createdAt: new Date(),
       updatedAt: new Date(),
       player: null
     });
 
-    const service = new AuthService(repository);
+    const service = new AuthService(repository, {
+      get: vi.fn().mockReturnValue(undefined)
+    } as unknown as ConfigService);
 
     await expect(
       service.register({
@@ -76,6 +88,7 @@ describe("AuthService", () => {
       id: accountId,
       email: "test@example.com",
       passwordHash: "stored-hash",
+      isAdmin: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       player: {
@@ -84,12 +97,15 @@ describe("AuthService", () => {
       }
     });
 
-    const service = new AuthService(repository);
+    const service = new AuthService(repository, {
+      get: vi.fn().mockReturnValue(undefined)
+    } as unknown as ConfigService);
     const actor = await service.authenticate("token-123");
 
     expect(actor).toEqual({
       accountId,
       email: "test@example.com",
+      isAdmin: true,
       playerId
     });
   });
@@ -98,7 +114,9 @@ describe("AuthService", () => {
     const repository = createRepositoryMock();
     vi.mocked(repository.findAccountByEmail).mockResolvedValueOnce(null);
 
-    const service = new AuthService(repository);
+    const service = new AuthService(repository, {
+      get: vi.fn().mockReturnValue(undefined)
+    } as unknown as ConfigService);
 
     await expect(
       service.login({
@@ -106,5 +124,42 @@ describe("AuthService", () => {
         password: "password123"
       })
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it("bootstraps admin accounts from ADMIN_EMAILS", async () => {
+    const repository = createRepositoryMock();
+    const accountId = crypto.randomUUID();
+    vi.mocked(repository.findAccountByEmail).mockResolvedValueOnce(null);
+    vi.mocked(repository.createAccount).mockResolvedValueOnce({
+      id: accountId,
+      email: "boss@example.com",
+      passwordHash: "stored-hash",
+      isAdmin: true,
+      createdAt: new Date("2026-03-18T20:00:00.000Z"),
+      updatedAt: new Date("2026-03-18T20:00:00.000Z"),
+      player: null
+    });
+    vi.mocked(repository.findAccountById).mockResolvedValueOnce({
+      id: accountId,
+      email: "boss@example.com",
+      passwordHash: "stored-hash",
+      isAdmin: true,
+      createdAt: new Date("2026-03-18T20:00:00.000Z"),
+      updatedAt: new Date("2026-03-18T20:00:00.000Z"),
+      player: null
+    });
+
+    const service = new AuthService(repository, {
+      get: vi.fn().mockReturnValue("boss@example.com")
+    } as unknown as ConfigService);
+
+    await service.register({
+      email: "boss@example.com",
+      password: "password123"
+    });
+
+    expect(repository.createAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ isAdmin: true })
+    );
   });
 });

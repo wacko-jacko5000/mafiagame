@@ -31,13 +31,13 @@ describe("CrimeBalanceService", () => {
     expect(service.listCrimeBalances().find((crime) => crime.id === "pickpocket")).toMatchObject({
       energyCost: 12,
       successRate: 0.7,
-      cashRewardMin: 150,
-      cashRewardMax: 240,
+      minReward: 150,
+      maxReward: 240,
       respectReward: 2
     });
   });
 
-  it("updates editable starter crime values", async () => {
+  it("updates editable crime values", async () => {
     const repository = {
       listCrimeBalances: vi.fn().mockResolvedValue([]),
       upsertCrimeBalance: vi.fn()
@@ -50,8 +50,8 @@ describe("CrimeBalanceService", () => {
         id: "pickpocket",
         energyCost: 12,
         successRate: 0.7,
-        cashRewardMin: 150,
-        cashRewardMax: 240,
+        minReward: 150,
+        maxReward: 240,
         respectReward: 2
       }
     ]);
@@ -59,8 +59,8 @@ describe("CrimeBalanceService", () => {
     expect(result.find((crime) => crime.id === "pickpocket")).toMatchObject({
       energyCost: 12,
       successRate: 0.7,
-      cashRewardMin: 150,
-      cashRewardMax: 240,
+      minReward: 150,
+      maxReward: 240,
       respectReward: 2
     });
     expect(repository.upsertCrimeBalance).toHaveBeenCalledWith({
@@ -83,10 +83,10 @@ describe("CrimeBalanceService", () => {
       service.updateCrimeBalances([
         {
           id: "pickpocket",
-          cashRewardMin: 300,
-          cashRewardMax: 200
+          minReward: 300,
+          maxReward: 200
         }
       ])
-    ).rejects.toThrowError(/cashRewardMin/);
+    ).rejects.toThrowError(/minReward/);
   });
 });

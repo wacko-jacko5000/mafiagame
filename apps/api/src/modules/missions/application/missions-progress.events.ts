@@ -44,22 +44,30 @@ export class MissionsProgressEventsHandler implements OnModuleInit, OnModuleDest
   }
 
   private async handleCrimeCompleted(event: CrimeCompletedEvent): Promise<void> {
-    await this.missionsService.recordProgress(event.playerId, "commit_crime_n_times");
+    if (!event.success) {
+      return;
+    }
+
+    await this.missionsService.recordProgress(event.playerId, "crime_count");
   }
 
   private async handleInventoryItemPurchased(
     event: InventoryItemPurchasedEvent
   ): Promise<void> {
-    await this.missionsService.recordProgress(event.playerId, "buy_item_n_times");
+    const itemType = event.itemId.includes("armor") ? "armor" : "weapon";
+
+    await this.missionsService.recordProgress(event.playerId, "buy_items", 1, {
+      itemType
+    });
   }
 
   private async handleCombatWon(event: CombatWonEvent): Promise<void> {
-    await this.missionsService.recordProgress(event.attackerPlayerId, "win_combat_n_times");
+    await this.missionsService.recordProgress(event.attackerPlayerId, "win_combat");
   }
 
   private async handleTerritoryDistrictClaimed(
     event: TerritoryDistrictClaimedEvent
   ): Promise<void> {
-    await this.missionsService.recordProgress(event.playerId, "claim_district_once");
+    await this.missionsService.recordProgress(event.playerId, "control_districts");
   }
 }

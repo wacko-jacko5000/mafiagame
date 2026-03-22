@@ -12,6 +12,24 @@ export class InsufficientCashForItemError extends Error {
   }
 }
 
+export class InventoryItemLevelLockedError extends Error {
+  constructor(itemName: string, requiredLevel: number, requiredRank: string) {
+    super(
+      `Player must reach level ${requiredLevel} (${requiredRank}) to purchase "${itemName}".`
+    );
+    this.name = "InventoryItemLevelLockedError";
+  }
+}
+
+export class InventoryItemEquipLevelLockedError extends Error {
+  constructor(itemName: string, requiredLevel: number, requiredRank: string) {
+    super(
+      `Player must reach level ${requiredLevel} (${requiredRank}) to equip "${itemName}".`
+    );
+    this.name = "InventoryItemEquipLevelLockedError";
+  }
+}
+
 export class InventoryOwnedItemNotFoundError extends Error {
   constructor(inventoryItemId: string) {
     super(`Owned inventory item "${inventoryItemId}" was not found.`);

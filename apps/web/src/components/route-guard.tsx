@@ -8,11 +8,13 @@ import { useSession } from "./providers/session-provider";
 interface RouteGuardProps {
   children: React.ReactNode;
   requirePlayer?: boolean;
+  requireAdmin?: boolean;
 }
 
 export function RouteGuard({
   children,
-  requirePlayer = false
+  requirePlayer = false,
+  requireAdmin = false
 }: Readonly<RouteGuardProps>) {
   const router = useRouter();
   const session = useSession();
@@ -29,8 +31,17 @@ export function RouteGuard({
       !session.account?.player
     ) {
       router.replace("/create-player");
+      return;
     }
-  }, [requirePlayer, router, session.account, session.status]);
+
+    if (
+      requireAdmin &&
+      session.status === "authenticated" &&
+      !session.account?.isAdmin
+    ) {
+      router.replace("/");
+    }
+  }, [requireAdmin, requirePlayer, router, session.account, session.status]);
 
   if (session.status === "loading") {
     return (
@@ -49,6 +60,10 @@ export function RouteGuard({
   }
 
   if (requirePlayer && !session.account?.player) {
+    return null;
+  }
+
+  if (requireAdmin && !session.account?.isAdmin) {
     return null;
   }
 

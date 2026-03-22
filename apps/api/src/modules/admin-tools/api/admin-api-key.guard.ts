@@ -1,49 +1,46 @@
 import {
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
   Inject,
   Injectable,
   UnauthorizedException
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { timingSafeEqual } from "node:crypto";
+
+import { AuthService } from "../../auth/application/auth.service";
+import type { AuthenticatedRequest } from "../../auth/api/auth-request.types";
 
 @Injectable()
 export class AdminApiKeyGuard implements CanActivate {
   constructor(
-    @Inject(ConfigService)
-    private readonly configService: ConfigService
+    @Inject(AuthService)
+    private readonly authService: AuthService
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const configuredApiKey = this.configService.get<string>("ADMIN_API_KEY");
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const authorizationHeader = request.header("authorization");
 
-    if (!configuredApiKey) {
-      throw new ForbiddenException("Admin balance API is disabled.");
+    if (!authorizationHeader) {
+      throw new UnauthorizedException("Authentication is required.");
     }
 
-    const request = context
-      .switchToHttp()
-      .getRequest<{ headers: Record<string, string | string[] | undefined> }>();
-    const providedHeader = request.headers["x-admin-token"];
-    const providedApiKey = Array.isArray(providedHeader) ? providedHeader[0] : providedHeader;
+    const [scheme, accessToken] = authorizationHeader.split(" ");
 
-    if (!providedApiKey || !this.tokensMatch(configuredApiKey, providedApiKey)) {
-      throw new UnauthorizedException("Missing or invalid admin token.");
+    if (scheme !== "Bearer" || !accessToken) {
+      throw new UnauthorizedException("Authorization header must use Bearer token auth.");
     }
 
+    const actor = await this.authService.authenticate(accessToken);
+
+    if (!actor) {
+      throw new UnauthorizedException("Authentication is required.");
+    }
+
+    if (!actor.isAdmin) {
+      throw new UnauthorizedException("Admin access is required.");
+    }
+
+    request.authActor = actor;
     return true;
-  }
-
-  private tokensMatch(expected: string, actual: string): boolean {
-    const expectedBuffer = Buffer.from(expected);
-    const actualBuffer = Buffer.from(actual);
-
-    if (expectedBuffer.length !== actualBuffer.length) {
-      return false;
-    }
-
-    return timingSafeEqual(expectedBuffer, actualBuffer);
   }
 }

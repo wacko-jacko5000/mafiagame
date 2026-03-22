@@ -15,12 +15,14 @@ import type { AuthActor } from "../../auth/domain/auth.types";
 import { InventoryService } from "../application/inventory.service";
 import type {
   EquippedItemsResponseBody,
+  PlayerShopItemResponseBody,
   PlayerInventoryItemResponseBody,
   PurchaseItemResponseBody,
   ShopItemResponseBody
 } from "./inventory.contracts";
 import {
   toEquippedItemsResponseBody,
+  toPlayerShopItemResponseBody,
   toPlayerInventoryItemResponseBody,
   toPurchaseItemResponseBody,
   toShopItemResponseBody
@@ -36,6 +38,18 @@ export class InventoryController {
   @Get("shop/items")
   getShopItems(): ShopItemResponseBody[] {
     return this.inventoryService.listShopItems().map(toShopItemResponseBody);
+  }
+
+  @Get("me/shop/items")
+  @UseGuards(AuthGuard)
+  async getCurrentPlayerShopItems(
+    @CurrentActor() actor: AuthActor | undefined
+  ): Promise<PlayerShopItemResponseBody[]> {
+    const items = await this.inventoryService.listShopItemsForPlayer(
+      requireCurrentPlayerId(actor)
+    );
+
+    return items.map(toPlayerShopItemResponseBody);
   }
 
   @Get("players/:playerId/inventory")

@@ -45,6 +45,7 @@ describe("AuthController", () => {
         id: crypto.randomUUID(),
         email: "test@example.com",
         passwordHash: "hidden",
+        isAdmin: false,
         createdAt: new Date("2026-03-18T20:00:00.000Z"),
         updatedAt: new Date("2026-03-18T20:00:00.000Z"),
         player: null
@@ -63,6 +64,7 @@ describe("AuthController", () => {
       accessToken: "token-123",
       account: {
         email: "test@example.com",
+        isAdmin: false,
         player: null
       }
     });
@@ -74,12 +76,14 @@ describe("AuthController", () => {
     vi.mocked(authService.authenticate).mockResolvedValueOnce({
       accountId,
       email: "test@example.com",
+      isAdmin: true,
       playerId
     });
     vi.mocked(authService.getAccountById).mockResolvedValueOnce({
       id: accountId,
       email: "test@example.com",
       passwordHash: "hidden",
+      isAdmin: true,
       createdAt: new Date("2026-03-18T20:00:00.000Z"),
       updatedAt: new Date("2026-03-18T20:00:00.000Z"),
       player: {
@@ -97,6 +101,7 @@ describe("AuthController", () => {
       account: {
         id: accountId,
         email: "test@example.com",
+        isAdmin: true,
         createdAt: "2026-03-18T20:00:00.000Z",
         updatedAt: "2026-03-18T20:00:00.000Z",
         player: {

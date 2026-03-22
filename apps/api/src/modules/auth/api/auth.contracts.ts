@@ -6,6 +6,7 @@ export interface AuthCredentialsRequestBody {
 export interface AuthenticatedAccountResponseBody {
   id: string;
   email: string;
+  isAdmin: boolean;
   createdAt: string;
   updatedAt: string;
   player: {

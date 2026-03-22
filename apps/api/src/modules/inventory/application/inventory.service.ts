@@ -14,6 +14,8 @@ import {
 import {
   InvalidEquipmentSlotError,
   InsufficientCashForItemError,
+  InventoryItemEquipLevelLockedError,
+  InventoryItemLevelLockedError,
   InventoryItemListedForSaleError,
   InventoryOwnedItemNotFoundError,
   InventoryItemNotFoundError,
@@ -23,6 +25,8 @@ import {
   buildEquippedInventory,
   buildInventoryList,
   parseEquipmentSlot,
+  toPlayerShopItem,
+  toShopCatalogItem,
   validateEquipmentSlotCompatibility
 } from "../domain/inventory.policy";
 import type {
@@ -30,8 +34,9 @@ import type {
   EquippedInventory,
   InventoryCombatLoadout,
   InventoryListItem,
-  ItemDefinition,
-  PurchaseInventoryItemResult
+  PlayerShopItem,
+  PurchaseInventoryItemResult,
+  ShopCatalogItem
 } from "../domain/inventory.types";
 import {
   INVENTORY_REPOSITORY,
@@ -49,8 +54,22 @@ export class InventoryService {
     private readonly inventoryRepository: InventoryRepository
   ) {}
 
-  listShopItems(): readonly ItemDefinition[] {
-    return starterItemCatalog;
+  listShopItems(): ShopCatalogItem[] {
+    return starterItemCatalog.map((item) =>
+      toShopCatalogItem(item, this.getUnlockRankName(item.unlockLevel))
+    );
+  }
+
+  async listShopItemsForPlayer(playerId: string): Promise<PlayerShopItem[]> {
+    const progression = await this.playerService.getPlayerProgression(playerId);
+
+    return starterItemCatalog.map((item) =>
+      toPlayerShopItem(
+        item,
+        this.getUnlockRankName(item.unlockLevel),
+        progression.level
+      )
+    );
   }
 
   async listPlayerInventory(playerId: string): Promise<InventoryListItem[]> {
@@ -74,7 +93,7 @@ export class InventoryService {
             inventoryItemId: equippedItems.weapon.id,
             itemId: equippedItems.weapon.itemId,
             attackBonus:
-              getItemById(equippedItems.weapon.itemId)?.combatAttackBonus ?? 0
+              getItemById(equippedItems.weapon.itemId)?.weaponStats?.damageBonus ?? 0
           }
         : null,
       armor: equippedItems.armor
@@ -82,7 +101,7 @@ export class InventoryService {
             inventoryItemId: equippedItems.armor.id,
             itemId: equippedItems.armor.itemId,
             defenseBonus:
-              getItemById(equippedItems.armor.itemId)?.combatDefenseBonus ?? 0
+              getItemById(equippedItems.armor.itemId)?.armorStats?.damageReduction ?? 0
           }
         : null
     };
@@ -98,7 +117,17 @@ export class InventoryService {
       throw new NotFoundException(new InventoryItemNotFoundError(itemId).message);
     }
 
-    await this.playerService.getPlayerById(playerId);
+    const progression = await this.playerService.getPlayerProgression(playerId);
+
+    if (progression.level < item.unlockLevel) {
+      throw new BadRequestException(
+        new InventoryItemLevelLockedError(
+          item.name,
+          item.unlockLevel,
+          this.getUnlockRankName(item.unlockLevel)
+        ).message
+      );
+    }
 
     try {
       const purchaseResult = await this.inventoryRepository.purchaseItem({
@@ -161,6 +190,18 @@ export class InventoryService {
       );
     }
 
+    const progression = await this.playerService.getPlayerProgression(playerId);
+
+    if (progression.level < item.unlockLevel) {
+      throw new BadRequestException(
+        new InventoryItemEquipLevelLockedError(
+          item.name,
+          item.unlockLevel,
+          this.getUnlockRankName(item.unlockLevel)
+        ).message
+      );
+    }
+
     try {
       validateEquipmentSlotCompatibility(item, parsedSlot);
     } catch {
@@ -209,5 +250,9 @@ export class InventoryService {
     } catch {
       throw new BadRequestException(new UnknownEquipmentSlotError(slot).message);
     }
+  }
+
+  private getUnlockRankName(unlockLevel: number): string {
+    return this.playerService.getRankNameForLevel(unlockLevel) ?? `Level ${unlockLevel}`;
   }
 }

@@ -54,7 +54,7 @@ describe("MarketService", () => {
 
     expect(result[0]).toMatchObject({
       id: "listing-1",
-      itemName: "Rusty Knife",
+      itemName: "Glock 17",
       itemType: "weapon",
       price: 900
     });
@@ -175,7 +175,7 @@ describe("MarketService", () => {
       listingId: "listing-1",
       inventoryItemId: "owned-1",
       itemId: "rusty-knife",
-      itemName: "Rusty Knife",
+      itemName: "Glock 17",
       sellerPlayerId: "seller-1",
       buyerPlayerId,
       price: 900

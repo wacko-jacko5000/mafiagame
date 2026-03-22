@@ -73,12 +73,14 @@ describe("PrismaInventoryRepository", () => {
       playerId: "player-1",
       item: {
         id: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
         equipSlot: "weapon",
-        combatAttackBonus: 4,
-        combatDefenseBonus: 0
+        unlockLevel: 1,
+        weaponStats: { damageBonus: 4 },
+        armorStats: null
       }
     });
 
@@ -88,11 +90,18 @@ describe("PrismaInventoryRepository", () => {
         id: "owned-1",
         playerId: "player-1",
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: now
       }
     });
@@ -120,12 +129,14 @@ describe("PrismaInventoryRepository", () => {
         playerId: "player-1",
         item: {
           id: "cheap-pistol",
-          name: "Cheap Pistol",
+          name: "Colt M1911",
           type: "weapon",
+          category: "handguns",
           price: 1800,
           equipSlot: "weapon",
-          combatAttackBonus: 8,
-          combatDefenseBonus: 0
+          unlockLevel: 1,
+          weaponStats: { damageBonus: 8 },
+          armorStats: null
         }
       })
     ).rejects.toBeInstanceOf(InsufficientCashForItemError);

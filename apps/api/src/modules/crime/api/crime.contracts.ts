@@ -1,8 +1,13 @@
 export interface CrimeListItemResponseBody {
   id: string;
   name: string;
+  unlockLevel: number;
+  requiredLevel: number;
+  difficulty: "easy" | "medium" | "hard" | "very_hard";
   energyCost: number;
   successRate: number;
+  minReward: number;
+  maxReward: number;
   cashRewardMin: number;
   cashRewardMax: number;
   respectReward: number;

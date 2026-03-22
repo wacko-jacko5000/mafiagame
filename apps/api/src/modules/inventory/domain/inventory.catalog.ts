@@ -1,33 +1,10 @@
+import { armorCatalog } from "./inventory-armor.catalog";
+import { weaponUnlockCatalog } from "./inventory-weapon-unlock.catalog";
 import type { ItemDefinition } from "./inventory.types";
 
 const defaultStarterItemCatalog: readonly ItemDefinition[] = [
-  {
-    id: "rusty-knife",
-    name: "Rusty Knife",
-    type: "weapon",
-    price: 400,
-    equipSlot: "weapon",
-    combatAttackBonus: 4,
-    combatDefenseBonus: 0
-  },
-  {
-    id: "cheap-pistol",
-    name: "Cheap Pistol",
-    type: "weapon",
-    price: 1800,
-    equipSlot: "weapon",
-    combatAttackBonus: 8,
-    combatDefenseBonus: 0
-  },
-  {
-    id: "leather-jacket",
-    name: "Leather Jacket",
-    type: "armor",
-    price: 950,
-    equipSlot: "armor",
-    combatAttackBonus: 0,
-    combatDefenseBonus: 3
-  }
+  ...weaponUnlockCatalog,
+  ...armorCatalog
 ] as const;
 
 export const starterItemCatalog: readonly ItemDefinition[] =
@@ -59,9 +36,13 @@ export function resetStarterItemCatalog(): void {
     item.id = defaultItem.id;
     item.name = defaultItem.name;
     item.type = defaultItem.type;
+    item.category = defaultItem.category;
     item.price = defaultItem.price;
     item.equipSlot = defaultItem.equipSlot;
-    item.combatAttackBonus = defaultItem.combatAttackBonus;
-    item.combatDefenseBonus = defaultItem.combatDefenseBonus;
+    item.unlockLevel = defaultItem.unlockLevel;
+    item.weaponStats = defaultItem.weaponStats
+      ? { ...defaultItem.weaponStats }
+      : null;
+    item.armorStats = defaultItem.armorStats ? { ...defaultItem.armorStats } : null;
   });
 }

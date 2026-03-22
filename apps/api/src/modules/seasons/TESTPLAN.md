@@ -5,4 +5,4 @@
 - single-season history read and list read
 - activation auto-deactivation behavior
 - deactivation rejection for non-active seasons
-- admin token guard enforcement on admin season endpoints
+- admin-role guard enforcement on admin season endpoints

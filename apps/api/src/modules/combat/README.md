@@ -24,6 +24,7 @@ Own conflict resolution for PvP and future PvE encounters.
 
 - This phase supports only direct player-vs-player attacks.
 - Combat uses simple deterministic formulas with starter equipment bonuses.
+- Armor damage reduction is read from the target's currently equipped inventory armor item at attack time.
 - Combat history, loot, rankings, gangs, and advanced PvP systems are intentionally left out for later.
 
 ## Events

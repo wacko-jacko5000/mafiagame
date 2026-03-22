@@ -10,6 +10,7 @@ Own player profile state and the first persistent gameplay-facing player foundat
 - Manage display names and baseline player resources.
 - Regenerate energy lazily from player-owned timestamps during normal request flow.
 - Expose the canonical player aggregate used by future game systems.
+- Own the static respect-to-rank progression catalog and derived player level data.
 - Persist simple jail and hospital release timestamps for other modules.
 - Own the one-to-one link from player state to an authenticated account.
 
@@ -18,6 +19,7 @@ Own player profile state and the first persistent gameplay-facing player foundat
 - `Player`
 - `PlayerResources`
 - `PlayerCreationValues`
+- `PlayerProgressionSnapshot`
 
 ## Dependencies
 
@@ -30,6 +32,7 @@ Own player profile state and the first persistent gameplay-facing player foundat
 - `energyUpdatedAt` tracks the last moment the stored energy value was synchronized against the lazy regeneration rule.
 - `accountId` is nullable during the ownership-hardening transition.
 - Authenticated `POST /api/players` binds the created player to the current account when a bearer token is present.
+- Player level and rank are derived from total respect through a static catalog in `domain/player-rank.catalog.ts`.
 
 ## Events
 
@@ -48,3 +51,4 @@ Own player profile state and the first persistent gameplay-facing player foundat
 - Player creation invariants
 - Display name validation
 - Resource shape and retrieval behavior
+- Respect threshold to rank derivation behavior

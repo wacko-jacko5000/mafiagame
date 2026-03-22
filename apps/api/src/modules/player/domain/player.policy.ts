@@ -3,10 +3,15 @@ import {
   playerDisplayNameRules,
   playerFoundationDefaults
 } from "./player.constants";
+import { playerRankCatalog } from "./player-rank.catalog";
 import {
   InvalidPlayerDisplayNameError
 } from "./player.errors";
-import type { PlayerCreationValues, PlayerSnapshot } from "./player.types";
+import type {
+  PlayerCreationValues,
+  PlayerProgressionSnapshot,
+  PlayerSnapshot
+} from "./player.types";
 
 export function normalizeDisplayName(displayName: string): string {
   return displayName.trim().replace(/\s+/g, " ");
@@ -52,6 +57,45 @@ export function buildInitialPlayerValues(
 export interface RegeneratedEnergyState {
   energy: number;
   energyUpdatedAt: Date;
+}
+
+export function derivePlayerProgression(respect: number): PlayerProgressionSnapshot {
+  const currentRank =
+    [...playerRankCatalog].reverse().find((rank) => respect >= rank.minRespect) ??
+    playerRankCatalog[0];
+  const nextRank = playerRankCatalog.find((rank) => rank.level === currentRank.level + 1);
+
+  if (!nextRank) {
+    return {
+      level: currentRank.level,
+      rank: currentRank.rank,
+      currentRespect: respect,
+      currentLevelMinRespect: currentRank.minRespect,
+      nextLevel: null,
+      nextRank: null,
+      nextLevelRespectRequired: null,
+      respectToNextLevel: null,
+      progressPercent: 100
+    };
+  }
+
+  const currentLevelSpan = nextRank.minRespect - currentRank.minRespect;
+  const respectEarnedThisLevel = respect - currentRank.minRespect;
+
+  return {
+    level: currentRank.level,
+    rank: currentRank.rank,
+    currentRespect: respect,
+    currentLevelMinRespect: currentRank.minRespect,
+    nextLevel: nextRank.level,
+    nextRank: nextRank.rank,
+    nextLevelRespectRequired: nextRank.minRespect,
+    respectToNextLevel: nextRank.minRespect - respect,
+    progressPercent: Math.max(
+      0,
+      Math.min(100, Math.floor((respectEarnedThisLevel / currentLevelSpan) * 100))
+    )
+  };
 }
 
 export function regeneratePlayerEnergy(

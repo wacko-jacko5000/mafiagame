@@ -9,9 +9,11 @@ import {
 import { HospitalService } from "../../hospital/application/hospital.service";
 import { JailService } from "../../jail/application/jail.service";
 import { PlayerService } from "../../player/application/player.service";
+import { derivePlayerProgression } from "../../player/domain/player.policy";
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
 import { getCrimeById, starterCrimeCatalog } from "../domain/crime.catalog";
 import {
+  CrimeLevelLockedError,
   CrimeNotFoundError,
   CrimeUnavailableWhileHospitalizedError,
   CrimeUnavailableWhileJailedError,
@@ -65,6 +67,13 @@ export class CrimeService {
     }
 
     const player = await this.playerService.getPlayerByIdAt(playerId, now);
+    const progression = derivePlayerProgression(player.respect);
+
+    if (progression.level < crime.unlockLevel) {
+      throw new BadRequestException(
+        new CrimeLevelLockedError(crime.name, crime.unlockLevel).message
+      );
+    }
 
     if (player.energy < crime.energyCost) {
       throw new BadRequestException(

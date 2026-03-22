@@ -6,7 +6,15 @@ export interface PlayerResponseBody {
   id: string;
   displayName: string;
   cash: number;
-  respect: number;
+  level: number;
+  rank: string;
+  currentRespect: number;
+  currentLevelMinRespect: number;
+  nextLevel: number | null;
+  nextRank: string | null;
+  nextLevelRespectRequired: number | null;
+  respectToNextLevel: number | null;
+  progressPercent: number;
   energy: number;
   health: number;
   jailedUntil: string | null;

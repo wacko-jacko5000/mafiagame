@@ -98,6 +98,39 @@ describe("PlayerService", () => {
     });
   });
 
+  it("derives player progression from respect through the player module", async () => {
+    const playerId = crypto.randomUUID();
+    const repository = createRepositoryMock();
+    vi.mocked(repository.findById).mockResolvedValue({
+      id: playerId,
+      accountId: null,
+      displayName: "Don Luca",
+      cash: 2500,
+      respect: 900,
+      energy: 100,
+      health: 100,
+      jailedUntil: null,
+      hospitalizedUntil: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const service = new PlayerService(repository);
+
+    await expect(service.getPlayerProgression(playerId)).resolves.toEqual({
+      level: 5,
+      rank: "Picciotto",
+      currentRespect: 900,
+      currentLevelMinRespect: 900,
+      nextLevel: 6,
+      nextRank: "Shoplifter",
+      nextLevelRespectRequired: 1500,
+      respectToNextLevel: 600,
+      progressPercent: 0
+    });
+    expect(service.getRankNameForLevel(21)).toBe("Legendary Don");
+  });
+
   it("applies a resource delta through the player repository", async () => {
     const playerId = crypto.randomUUID();
     const repository = createRepositoryMock();

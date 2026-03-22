@@ -8,7 +8,16 @@ import { InventoryService } from "./inventory.service";
 
 function createPlayerServiceMock() {
   return {
-    getPlayerById: vi.fn()
+    getPlayerById: vi.fn(),
+    getPlayerProgression: vi.fn(),
+    getRankNameForLevel: vi.fn((level: number) => {
+      const names: Record<number, string> = {
+        1: "Scum",
+        2: "Empty Suit",
+        21: "Legendary Don"
+      };
+      return names[level] ?? `Level ${level}`;
+    })
   } as unknown as PlayerService;
 }
 
@@ -30,17 +39,69 @@ function createInventoryRepositoryMock(): InventoryRepository {
 
 describe("InventoryService", () => {
   it("lists the starter shop catalog", () => {
+    const playerService = createPlayerServiceMock();
     const service = new InventoryService(
-      createPlayerServiceMock(),
+      playerService,
       createDomainEventsServiceMock(),
       createInventoryRepositoryMock()
     );
 
-    expect(service.listShopItems().map((item) => item.id)).toEqual([
-      "rusty-knife",
-      "cheap-pistol",
-      "leather-jacket"
+    expect(service.listShopItems().slice(0, 3)).toEqual([
+      expect.objectContaining({
+        id: "rusty-knife",
+        name: "Glock 17",
+        category: "handguns",
+        unlockLevel: 1,
+        unlockRank: "Scum"
+      }),
+      expect.objectContaining({
+        id: "cheap-pistol",
+        name: "Colt M1911",
+        category: "handguns",
+        unlockLevel: 1,
+        unlockRank: "Scum"
+      }),
+      expect.objectContaining({
+        id: "beretta-92fs",
+        unlockLevel: 2,
+        unlockRank: "Empty Suit"
+      })
     ]);
+    expect(service.listShopItems().map((item) => item.id)).toContain("leather-jacket");
+  });
+
+  it("projects lock state for the current player's shop view", async () => {
+    const playerService = createPlayerServiceMock();
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
+    });
+
+    const service = new InventoryService(
+      playerService,
+      createDomainEventsServiceMock(),
+      createInventoryRepositoryMock()
+    );
+
+    const result = await service.listShopItemsForPlayer(crypto.randomUUID());
+
+    expect(result.find((item) => item.id === "rusty-knife")).toMatchObject({
+      isUnlocked: true,
+      isLocked: false
+    });
+    expect(result.find((item) => item.id === "beretta-92fs")).toMatchObject({
+      unlockLevel: 2,
+      unlockRank: "Empty Suit",
+      isUnlocked: false,
+      isLocked: true
+    });
   });
 
   it("lists a player's owned inventory", async () => {
@@ -81,7 +142,7 @@ describe("InventoryService", () => {
 
     expect(result[0]).toMatchObject({
       itemId: "rusty-knife",
-      name: "Rusty Knife"
+      name: "Glock 17"
     });
   });
 
@@ -89,17 +150,16 @@ describe("InventoryService", () => {
     const playerId = crypto.randomUUID();
     const playerService = createPlayerServiceMock();
     const repository = createInventoryRepositoryMock();
-    vi.mocked(playerService.getPlayerById).mockResolvedValue({
-      id: playerId,
-      displayName: "Don Luca",
-      cash: 2500,
-      respect: 0,
-      energy: 100,
-      health: 100,
-      jailedUntil: null,
-      hospitalizedUntil: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
     });
     vi.mocked(repository.purchaseItem).mockResolvedValue({
       playerCashAfterPurchase: 2100,
@@ -107,11 +167,18 @@ describe("InventoryService", () => {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
-        name: "Rusty Knife",
+        name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
       }
     });
@@ -136,6 +203,33 @@ describe("InventoryService", () => {
       itemId: "rusty-knife",
       price: 400
     });
+  });
+
+  it("rejects purchases when the player's level is too low", async () => {
+    const playerService = createPlayerServiceMock();
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
+    });
+
+    const repository = createInventoryRepositoryMock();
+    const service = new InventoryService(
+      playerService,
+      createDomainEventsServiceMock(),
+      repository
+    );
+
+    await expect(service.purchaseItem(crypto.randomUUID(), "beretta-92fs")).rejects.toMatchObject({
+      status: 400
+    });
+    expect(repository.purchaseItem).not.toHaveBeenCalled();
   });
 
   it("rejects unknown shop items", async () => {
@@ -209,6 +303,17 @@ describe("InventoryService", () => {
       createdAt: new Date(),
       updatedAt: new Date()
     });
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
+    });
     vi.mocked(repository.findPlayerItemById).mockResolvedValue({
       id: inventoryItemId,
       playerId,
@@ -261,6 +366,17 @@ describe("InventoryService", () => {
       hospitalizedUntil: null,
       createdAt: new Date(),
       updatedAt: new Date()
+    });
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 5,
+      rank: "Soldier",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 6,
+      nextRank: "Capo",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
     });
     vi.mocked(repository.findPlayerItemById).mockResolvedValue({
       id: inventoryItemId,
@@ -328,6 +444,59 @@ describe("InventoryService", () => {
     expect(repository.equipItem).not.toHaveBeenCalled();
   });
 
+  it("rejects equipping an item when the player's level is too low", async () => {
+    const playerId = crypto.randomUUID();
+    const inventoryItemId = crypto.randomUUID();
+    const playerService = createPlayerServiceMock();
+    const repository = createInventoryRepositoryMock();
+    vi.mocked(playerService.getPlayerById).mockResolvedValue({
+      id: playerId,
+      displayName: "Don Luca",
+      cash: 2500,
+      respect: 0,
+      energy: 100,
+      health: 100,
+      jailedUntil: null,
+      hospitalizedUntil: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
+    });
+    vi.mocked(repository.findPlayerItemById).mockResolvedValue({
+      id: inventoryItemId,
+      playerId,
+      itemId: "kevlar-vest",
+      equippedSlot: null,
+      marketListingId: null,
+      acquiredAt: new Date("2026-03-16T20:00:00.000Z"),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const service = new InventoryService(
+      playerService,
+      createDomainEventsServiceMock(),
+      repository
+    );
+
+    await expect(
+      service.equipItem(playerId, inventoryItemId, "armor")
+    ).rejects.toMatchObject({
+      status: 400
+    });
+    expect(repository.equipItem).not.toHaveBeenCalled();
+  });
+
   it("unequips a slot", async () => {
     const playerId = crypto.randomUUID();
     const playerService = createPlayerServiceMock();
@@ -369,17 +538,16 @@ describe("InventoryService", () => {
     const playerId = crypto.randomUUID();
     const playerService = createPlayerServiceMock();
     const repository = createInventoryRepositoryMock();
-    vi.mocked(playerService.getPlayerById).mockResolvedValue({
-      id: playerId,
-      displayName: "Don Luca",
-      cash: 100,
-      respect: 0,
-      energy: 100,
-      health: 100,
-      jailedUntil: null,
-      hospitalizedUntil: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
     });
     vi.mocked(repository.purchaseItem).mockRejectedValue(
       new InsufficientCashForItemError("cheap-pistol")

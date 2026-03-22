@@ -1,10 +1,19 @@
+import type { ItemType } from "../../inventory/domain/inventory.types";
 import type { PlayerResources } from "../../player/domain/player.types";
 
 export type MissionObjectiveType =
-  | "commit_crime_n_times"
-  | "buy_item_n_times"
-  | "win_combat_n_times"
-  | "claim_district_once";
+  | "crime_count"
+  | "earn_money"
+  | "reach_respect"
+  | "buy_items"
+  | "equip_weapon"
+  | "equip_armor"
+  | "equip_loadout"
+  | "win_combat"
+  | "own_items"
+  | "join_gang"
+  | "recruit_member"
+  | "control_districts";
 
 export type MissionStatus = "active" | "completed";
 
@@ -12,11 +21,13 @@ export interface MissionDefinition {
   id: string;
   name: string;
   description: string;
+  unlockLevel: number;
   objectiveType: MissionObjectiveType;
-  objectiveTarget: number;
+  target: number;
   rewardCash: number;
   rewardRespect: number;
   isRepeatable: boolean;
+  itemType?: ItemType;
 }
 
 export interface PlayerMissionSnapshot {

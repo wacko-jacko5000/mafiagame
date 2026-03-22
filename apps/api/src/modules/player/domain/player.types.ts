@@ -20,6 +20,18 @@ export interface PlayerResources {
   health: number;
 }
 
+export interface PlayerProgressionSnapshot {
+  level: number;
+  rank: string;
+  currentRespect: number;
+  currentLevelMinRespect: number;
+  nextLevel: number | null;
+  nextRank: string | null;
+  nextLevelRespectRequired: number | null;
+  respectToNextLevel: number | null;
+  progressPercent: number;
+}
+
 export interface PlayerResourceDelta {
   cash?: number;
   respect?: number;

@@ -21,6 +21,7 @@ function toAccountSnapshot(
     id: account.id,
     email: account.email,
     passwordHash: account.passwordHash,
+    isAdmin: account.isAdmin,
     createdAt: account.createdAt,
     updatedAt: account.updatedAt,
     player: account.player
@@ -95,6 +96,27 @@ export class PrismaAuthRepository implements AuthRepository {
     });
 
     return account ? toAccountSnapshot(account) : null;
+  }
+
+  async markAccountAsAdmin(accountId: string): Promise<AccountSnapshot> {
+    const account = await this.prismaService.account.update({
+      where: {
+        id: accountId
+      },
+      data: {
+        isAdmin: true
+      },
+      include: {
+        player: {
+          select: {
+            id: true,
+            displayName: true
+          }
+        }
+      }
+    });
+
+    return toAccountSnapshot(account);
   }
 
   async findAccountByActiveSessionTokenHash(
