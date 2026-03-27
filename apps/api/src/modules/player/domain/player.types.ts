@@ -1,3 +1,5 @@
+import type { CustodyStatusType } from "../../custody/domain/custody.types";
+
 export interface PlayerSnapshot {
   id: string;
   accountId?: string | null;
@@ -9,6 +11,10 @@ export interface PlayerSnapshot {
   health: number;
   jailedUntil: Date | null;
   hospitalizedUntil: Date | null;
+  jailEntryCount?: number;
+  hospitalEntryCount?: number;
+  jailReason?: string | null;
+  hospitalReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +48,20 @@ export interface PlayerResourceDelta {
 export interface PlayerCustodyStatusUpdate {
   jailedUntil?: Date | null;
   hospitalizedUntil?: Date | null;
+  jailReason?: string | null;
+  hospitalReason?: string | null;
+}
+
+export interface PlayerCustodyEntryInput {
+  statusType: CustodyStatusType;
+  until: Date;
+  reason: string | null;
+}
+
+export interface PlayerCustodyBuyoutInput {
+  statusType: CustodyStatusType;
+  buyoutPrice: number;
+  now: Date;
 }
 
 export interface CreatePlayerCommand {

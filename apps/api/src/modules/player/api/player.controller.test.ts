@@ -12,6 +12,8 @@ function createRepositoryMock(): PlayerRepository {
     create: vi.fn(),
     applyResourceDelta: vi.fn(),
     updateCustodyStatus: vi.fn(),
+    applyCustodyEntry: vi.fn(),
+    buyOutCustodyStatus: vi.fn(),
     findByAccountId: vi.fn(),
     findByDisplayName: vi.fn(),
     findById: vi.fn()

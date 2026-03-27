@@ -3,7 +3,11 @@ export type PlayerActivityType =
   | "territory_payout_claimed"
   | "territory_war_won"
   | "achievement_unlocked"
-  | "gang_invite_received";
+  | "gang_invite_received"
+  | "jail.entered"
+  | "jail.buyout"
+  | "hospital.entered"
+  | "hospital.buyout";
 
 export interface PlayerActivitySnapshot {
   id: string;

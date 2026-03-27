@@ -40,6 +40,28 @@ export interface Player {
   updatedAt: string;
 }
 
+export interface CustodyBuyoutStatus {
+  statusType: "jail" | "hospital";
+  active: boolean;
+  until: string | null;
+  remainingSeconds: number;
+  reason: string | null;
+  entryCountSinceLevelReset: number;
+  repeatCountSinceLevelReset: number;
+  basePricePerMinute: number | null;
+  currentPricePerMinute: number | null;
+  escalationEnabled: boolean;
+  escalationPercentage: number;
+  minimumPrice: number | null;
+  roundingRule: "ceil";
+  buyoutPrice: number | null;
+}
+
+export interface CustodyBuyoutResult {
+  buyoutPrice: number;
+  player: Player;
+}
+
 export interface CrimeDefinition {
   id: string;
   name: string;
@@ -75,15 +97,17 @@ export type ShopItemCategory =
   | "assault_rifle"
   | "sniper"
   | "special"
-  | "armor";
+  | "armor"
+  | "drugs";
 
 export interface ShopItem {
   id: string;
   name: string;
-  type: "weapon" | "armor";
+  type: "weapon" | "armor" | "consumable";
   category: ShopItemCategory;
   price: number;
-  equipSlot: EquipmentSlot;
+  delivery: "inventory" | "instant";
+  equipSlot: EquipmentSlot | null;
   unlockLevel: number;
   unlockRank: string;
   weaponStats: {
@@ -92,6 +116,11 @@ export interface ShopItem {
   armorStats: {
     damageReduction: number;
   } | null;
+  consumableEffects: Array<{
+    type: "resource";
+    resource: "energy" | "health";
+    amount: number;
+  }> | null;
   isUnlocked: boolean;
   isLocked: boolean;
 }
@@ -117,10 +146,27 @@ export interface InventoryItem {
   acquiredAt: string;
 }
 
-export interface PurchaseItemResult {
+export interface PurchaseInventoryItemResult {
+  delivery: "inventory";
   playerCashAfterPurchase: number;
+  playerEnergyAfterPurchase: null;
+  playerHealthAfterPurchase: null;
   ownedItem: InventoryItem;
+  consumedItem: null;
 }
+
+export interface PurchaseConsumableItemResult {
+  delivery: "instant";
+  playerCashAfterPurchase: number;
+  playerEnergyAfterPurchase: number;
+  playerHealthAfterPurchase: number;
+  ownedItem: null;
+  consumedItem: ShopItem;
+}
+
+export type PurchaseItemResult =
+  | PurchaseInventoryItemResult
+  | PurchaseConsumableItemResult;
 
 export interface EquippedItems {
   weapon: InventoryItem | null;
@@ -344,7 +390,7 @@ export interface MarketPurchaseResult {
   sellerCashAfterSale: number;
 }
 
-export type AdminBalanceSectionKey = "crimes" | "districts" | "shop-items";
+export type AdminBalanceSectionKey = "crimes" | "districts" | "shop-items" | "custody";
 
 export type StickyMenuDestinationKey =
   | "home"
@@ -407,8 +453,31 @@ export interface ShopItemBalanceEntry {
   id: string;
   name: string;
   type: string;
+  category: string;
+  delivery: "inventory" | "instant";
   price: number;
   equipSlot: string | null;
+  consumableEffects: Array<{
+    type: "resource";
+    resource: "energy" | "health";
+    amount: number;
+  }> | null;
+}
+
+export interface CustodyBuyoutLevelBalanceEntry {
+  level: number;
+  rank: string;
+  basePricePerMinute: number;
+}
+
+export interface CustodyBalanceEntry {
+  id: "jail" | "hospital";
+  name: string;
+  escalationEnabled: boolean;
+  escalationPercentage: number;
+  minimumPrice: number | null;
+  roundingRule: "ceil";
+  levels: CustodyBuyoutLevelBalanceEntry[];
 }
 
 export type AdminBalanceSectionView =
@@ -435,4 +504,16 @@ export type AdminBalanceSectionView =
       label: "Starter Shop Items";
       editableFields: readonly ["price"];
       entries: ShopItemBalanceEntry[];
+    }
+  | {
+      section: "custody";
+      label: "Custody Buyouts";
+      editableFields: readonly [
+        "basePricePerMinute",
+        "escalationEnabled",
+        "escalationPercentage",
+        "minimumPrice",
+        "roundingRule"
+      ];
+      entries: CustodyBalanceEntry[];
     };

@@ -22,7 +22,8 @@ describe("hospital policy", () => {
       playerId: "player-1",
       active: false,
       until: null,
-      remainingSeconds: 0
+      remainingSeconds: 0,
+      reason: null
     });
   });
 });

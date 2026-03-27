@@ -15,6 +15,10 @@ import {
   type UpdateShopItemBalanceInput
 } from "../../inventory/application/inventory-balance.service";
 import {
+  CustodyBalanceService,
+  type UpdateCustodyBalanceInput
+} from "../../custody/application/custody-balance.service";
+import {
   TerritoryBalanceService,
   type UpdateDistrictBalanceInput
 } from "../../territory/application/territory-balance.service";
@@ -77,6 +81,38 @@ const shopItemUpdateSchema = z.object({
   )
 });
 
+const custodyUpdateSchema = z.object({
+  entries: z.array(
+    z
+      .object({
+        statusType: z.enum(["jail", "hospital"]),
+        escalationEnabled: z.boolean().optional(),
+        escalationPercentage: z.number().min(0).max(1).optional(),
+        minimumPrice: z.number().int().nonnegative().nullable().optional(),
+        roundingRule: z.enum(["ceil"]).optional(),
+        levels: z
+          .array(
+            z.object({
+              level: z.number().int().positive(),
+              basePricePerMinute: z.number().int().positive()
+            })
+          )
+          .optional()
+      })
+      .refine(
+        (value) =>
+          value.escalationEnabled !== undefined ||
+          value.escalationPercentage !== undefined ||
+          value.minimumPrice !== undefined ||
+          value.roundingRule !== undefined ||
+          (value.levels?.length ?? 0) > 0,
+        {
+          message: "Each custody update must include at least one editable field."
+        }
+      )
+  )
+});
+
 const auditQuerySchema = z.object({
   section: z.enum(adminBalanceSections).optional(),
   targetId: z.string().min(1).optional(),
@@ -88,6 +124,7 @@ type AuditValue = Record<string, number | string | null>;
 type CrimeSectionView = Extract<AdminBalanceSectionView, { section: "crimes" }>;
 type DistrictSectionView = Extract<AdminBalanceSectionView, { section: "districts" }>;
 type ShopItemSectionView = Extract<AdminBalanceSectionView, { section: "shop-items" }>;
+type CustodySectionView = Extract<AdminBalanceSectionView, { section: "custody" }>;
 
 function toCrimeAuditValue(entry: CrimeSectionView["entries"][number]): AuditValue {
   return {
@@ -119,8 +156,33 @@ function toShopItemAuditValue(
     id: entry.id,
     name: entry.name,
     type: entry.type,
+    category: entry.category,
+    delivery: entry.delivery,
     price: entry.price,
-    equipSlot: entry.equipSlot
+    equipSlot: entry.equipSlot,
+    consumableEffects: entry.consumableEffects
+      ? JSON.stringify(entry.consumableEffects)
+      : null
+  };
+}
+
+function toCustodyAuditValue(
+  entry: CustodySectionView["entries"][number]
+): AuditValue {
+  return {
+    id: entry.id,
+    name: entry.name,
+    escalationEnabled: entry.escalationEnabled ? "true" : "false",
+    escalationPercentage: entry.escalationPercentage,
+    minimumPrice: entry.minimumPrice,
+    roundingRule: entry.roundingRule,
+    levels: JSON.stringify(
+      entry.levels.map((level) => ({
+        level: level.level,
+        rank: level.rank,
+        basePricePerMinute: level.basePricePerMinute
+      }))
+    )
   };
 }
 
@@ -134,7 +196,9 @@ export class AdminBalanceService {
     @Inject(TerritoryBalanceService)
     private readonly territoryBalanceService: TerritoryBalanceService,
     @Inject(InventoryBalanceService)
-    private readonly inventoryBalanceService: InventoryBalanceService
+    private readonly inventoryBalanceService: InventoryBalanceService,
+    @Inject(CustodyBalanceService)
+    private readonly custodyBalanceService: CustodyBalanceService
   ) {}
 
   async getAllSections(): Promise<AdminBalanceSectionView[]> {
@@ -183,6 +247,33 @@ export class AdminBalanceService {
       };
     }
 
+    if (parsedSection === "custody") {
+      return {
+        section: "custody",
+        label: "Custody Buyouts",
+        editableFields: [
+          "basePricePerMinute",
+          "escalationEnabled",
+          "escalationPercentage",
+          "minimumPrice",
+          "roundingRule"
+        ],
+        entries: this.custodyBalanceService.listStatusConfigs().map((entry) => ({
+          id: entry.statusType,
+          name: entry.label,
+          escalationEnabled: entry.escalationEnabled,
+          escalationPercentage: entry.escalationPercentage,
+          minimumPrice: entry.minimumPrice,
+          roundingRule: entry.roundingRule,
+          levels: entry.levels.map((level) => ({
+            level: level.level,
+            rank: level.rank,
+            basePricePerMinute: level.basePricePerMinute
+          }))
+        }))
+      };
+    }
+
     return {
       section: "shop-items",
       label: "Starter Shop Items",
@@ -191,8 +282,13 @@ export class AdminBalanceService {
         id: item.id,
         name: item.name,
         type: item.type,
+        category: item.category,
+        delivery: item.delivery,
         price: item.price,
-        equipSlot: item.equipSlot
+        equipSlot: item.equipSlot,
+        consumableEffects: item.consumableEffects
+          ? [...item.consumableEffects]
+          : null
       }))
     };
   }
@@ -236,6 +332,26 @@ export class AdminBalanceService {
       await this.recordAuditEntries(
         parsedSection,
         updates.districts.map((update) => update.id),
+        previousSection,
+        nextSection,
+        changedByAccountId
+      );
+
+      return nextSection;
+    }
+
+    if (parsedSection === "custody") {
+      const updates = this.parsePayload<{ entries: UpdateCustodyBalanceInput[] }>(
+        custodyUpdateSchema,
+        payload
+      );
+
+      const previousSection = await this.getSection(parsedSection);
+      await this.custodyBalanceService.updateBalances(updates.entries);
+      const nextSection = await this.getSection(parsedSection);
+      await this.recordAuditEntries(
+        parsedSection,
+        updates.entries.map((update) => update.statusType),
         previousSection,
         nextSection,
         changedByAccountId
@@ -352,6 +468,16 @@ export class AdminBalanceService {
       }
 
       return toDistrictAuditValue(entry);
+    }
+
+    if (section.section === "custody") {
+      const entry = section.entries.find((item) => item.id === targetId);
+
+      if (!entry) {
+        throw new NotFoundException(`Balance entry "${targetId}" was not found.`);
+      }
+
+      return toCustodyAuditValue(entry);
     }
 
     const entry = section.entries.find((item) => item.id === targetId);

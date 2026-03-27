@@ -1,4 +1,6 @@
 import type {
+  PlayerCustodyBuyoutInput,
+  PlayerCustodyEntryInput,
   PlayerCreationValues,
   PlayerCustodyStatusUpdate,
   PlayerResourceDelta,
@@ -20,5 +22,13 @@ export interface PlayerRepository {
   updateCustodyStatus(
     playerId: string,
     status: PlayerCustodyStatusUpdate
+  ): Promise<PlayerSnapshot | null>;
+  applyCustodyEntry(
+    playerId: string,
+    input: PlayerCustodyEntryInput
+  ): Promise<PlayerSnapshot | null>;
+  buyOutCustodyStatus(
+    playerId: string,
+    input: PlayerCustodyBuyoutInput
   ): Promise<PlayerSnapshot | null>;
 }

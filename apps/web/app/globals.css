@@ -318,6 +318,12 @@ dd {
   color: #ffd7d0;
 }
 
+.notice-success {
+  background: rgba(33, 92, 49, 0.3);
+  border-color: rgba(131, 222, 160, 0.3);
+  color: #d7ffe2;
+}
+
 .list,
 .leaderboard-list {
   list-style: none;
@@ -346,6 +352,18 @@ dd {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.shop-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.shop-category-tab.is-active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  border-color: transparent;
+  color: #24190f;
 }
 
 .admin-toolbar {
@@ -422,6 +440,32 @@ dd {
 .desktop-shell {
   display: grid;
   gap: 20px;
+}
+
+.custody-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.custody-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top, rgba(215, 162, 96, 0.15), transparent 35%),
+    rgba(3, 4, 6, 0.84);
+  backdrop-filter: blur(10px);
+}
+
+.custody-overlay-card {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  background: rgba(18, 14, 12, 0.98);
+  border-color: rgba(241, 195, 125, 0.28);
 }
 
 .mobile-game-header,
@@ -593,5 +637,14 @@ dd {
     text-decoration: none;
     color: var(--text-main);
     background: rgba(255, 255, 255, 0.03);
+  }
+
+  .custody-overlay {
+    padding: 12px;
+  }
+
+  .custody-overlay-card {
+    width: 100%;
+    border-radius: 22px;
   }
 }

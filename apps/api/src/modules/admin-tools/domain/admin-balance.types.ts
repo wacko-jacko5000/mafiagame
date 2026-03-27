@@ -1,4 +1,4 @@
-export const adminBalanceSections = ["crimes", "districts", "shop-items"] as const;
+export const adminBalanceSections = ["crimes", "districts", "shop-items", "custody"] as const;
 
 export type AdminBalanceSectionKey = (typeof adminBalanceSections)[number];
 
@@ -33,8 +33,31 @@ export interface ShopItemBalanceEntry {
   id: string;
   name: string;
   type: string;
+  category: string;
+  delivery: "inventory" | "instant";
   price: number;
   equipSlot: string | null;
+  consumableEffects: Array<{
+    type: "resource";
+    resource: "energy" | "health";
+    amount: number;
+  }> | null;
+}
+
+export interface CustodyBuyoutLevelBalanceEntry {
+  level: number;
+  rank: string;
+  basePricePerMinute: number;
+}
+
+export interface CustodyBalanceEntry {
+  id: "jail" | "hospital";
+  name: string;
+  escalationEnabled: boolean;
+  escalationPercentage: number;
+  minimumPrice: number | null;
+  roundingRule: "ceil";
+  levels: CustodyBuyoutLevelBalanceEntry[];
 }
 
 export type AdminBalanceSectionView =
@@ -61,4 +84,16 @@ export type AdminBalanceSectionView =
       label: "Starter Shop Items";
       editableFields: readonly ["price"];
       entries: ShopItemBalanceEntry[];
+    }
+  | {
+      section: "custody";
+      label: "Custody Buyouts";
+      editableFields: readonly [
+        "basePricePerMinute",
+        "escalationEnabled",
+        "escalationPercentage",
+        "minimumPrice",
+        "roundingRule"
+      ];
+      entries: CustodyBalanceEntry[];
     };

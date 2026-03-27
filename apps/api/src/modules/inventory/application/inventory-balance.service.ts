@@ -2,10 +2,10 @@ import { BadRequestException, Inject, Injectable, NotFoundException, OnModuleIni
 
 import {
   applyShopItemBalanceOverride,
-  getItemById,
-  starterItemCatalog
+  getShopItemById,
+  starterShopItemCatalog
 } from "../domain/inventory.catalog";
-import type { ItemDefinition } from "../domain/inventory.types";
+import type { ShopItemDefinition } from "../domain/inventory.types";
 import {
   INVENTORY_BALANCE_REPOSITORY,
   type InventoryBalanceRepository
@@ -33,15 +33,30 @@ export class InventoryBalanceService implements OnModuleInit {
     }
   }
 
-  listShopItemBalances(): ItemDefinition[] {
-    return starterItemCatalog.map((item) => ({ ...item }));
+  listShopItemBalances(): ShopItemDefinition[] {
+    return starterShopItemCatalog.map((item) =>
+      item.delivery === "inventory"
+        ? {
+            ...item,
+            delivery: "inventory",
+            consumableEffects: null,
+            weaponStats: item.weaponStats ? { ...item.weaponStats } : null,
+            armorStats: item.armorStats ? { ...item.armorStats } : null
+          }
+        : {
+            ...item,
+            weaponStats: null,
+            armorStats: null,
+            consumableEffects: item.consumableEffects.map((effect) => ({ ...effect }))
+          }
+    );
   }
 
   async updateShopItemBalances(
     updates: readonly UpdateShopItemBalanceInput[]
-  ): Promise<ItemDefinition[]> {
+    ): Promise<ShopItemDefinition[]> {
     for (const update of updates) {
-      const item = getItemById(update.id);
+      const item = getShopItemById(update.id);
 
       if (!item) {
         throw new NotFoundException(`Shop item "${update.id}" was not found.`);

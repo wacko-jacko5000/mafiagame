@@ -9,12 +9,14 @@ describe("PrismaCombatRepository", () => {
         findUnique: vi.fn().mockResolvedValue({
           id: "target-1",
           health: 15,
-          hospitalizedUntil: null
+          hospitalizedUntil: null,
+          hospitalEntryCount: 0
         }),
         update: vi.fn().mockResolvedValue({
           id: "target-1",
           health: 3,
-          hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z")
+          hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z"),
+          hospitalEntryCount: 1
         })
       }
     };
@@ -28,6 +30,7 @@ describe("PrismaCombatRepository", () => {
       damageDealt: 12,
       hospitalThreshold: 10,
       hospitalDurationSeconds: 600,
+      hospitalReason: "Gevecht.",
       now: new Date("2026-03-16T22:00:00.000Z")
     });
 
@@ -45,12 +48,14 @@ describe("PrismaCombatRepository", () => {
         findUnique: vi.fn().mockResolvedValue({
           id: "target-1",
           health: 5,
-          hospitalizedUntil: null
+          hospitalizedUntil: null,
+          hospitalEntryCount: 0
         }),
         update: vi.fn().mockResolvedValue({
           id: "target-1",
           health: 0,
-          hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z")
+          hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z"),
+          hospitalEntryCount: 1
         })
       }
     };
@@ -64,6 +69,7 @@ describe("PrismaCombatRepository", () => {
       damageDealt: 50,
       hospitalThreshold: 10,
       hospitalDurationSeconds: 600,
+      hospitalReason: "Gevecht.",
       now: new Date("2026-03-16T22:00:00.000Z")
     });
 

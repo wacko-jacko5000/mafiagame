@@ -2,7 +2,7 @@ import type {
   InventoryListItem,
   PlayerShopItem,
   ShopCatalogItem,
-  PurchaseInventoryItemResult
+  PurchaseShopItemResult
 } from "../domain/inventory.types";
 import type {
   EquippedItemsResponseBody,
@@ -21,11 +21,13 @@ export function toShopItemResponseBody(
     type: item.type,
     category: item.category,
     price: item.price,
+    delivery: item.delivery,
     equipSlot: item.equipSlot,
     unlockLevel: item.unlockLevel,
     unlockRank: item.unlockRank,
     weaponStats: item.weaponStats,
-    armorStats: item.armorStats
+    armorStats: item.armorStats,
+    consumableEffects: item.consumableEffects ? [...item.consumableEffects] : null
   };
 }
 
@@ -61,11 +63,26 @@ export function toPlayerInventoryItemResponseBody(
 }
 
 export function toPurchaseItemResponseBody(
-  result: PurchaseInventoryItemResult
+  result: PurchaseShopItemResult
 ): PurchaseItemResponseBody {
+  if (result.delivery === "inventory") {
+    return {
+      delivery: "inventory",
+      playerCashAfterPurchase: result.playerCashAfterPurchase,
+      playerEnergyAfterPurchase: null,
+      playerHealthAfterPurchase: null,
+      ownedItem: toPlayerInventoryItemResponseBody(result.ownedItem),
+      consumedItem: null
+    };
+  }
+
   return {
+    delivery: "instant",
     playerCashAfterPurchase: result.playerCashAfterPurchase,
-    ownedItem: toPlayerInventoryItemResponseBody(result.ownedItem)
+    playerEnergyAfterPurchase: result.playerEnergyAfterPurchase,
+    playerHealthAfterPurchase: result.playerHealthAfterPurchase,
+    ownedItem: null,
+    consumedItem: toShopItemResponseBody(result.consumedItem)
   };
 }
 

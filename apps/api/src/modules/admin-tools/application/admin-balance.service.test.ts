@@ -2,9 +2,48 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { AdminBalanceAuditRepository } from "./admin-balance-audit.repository";
 import { CrimeBalanceService } from "../../crime/application/crime-balance.service";
+import { CustodyBalanceService } from "../../custody/application/custody-balance.service";
 import { InventoryBalanceService } from "../../inventory/application/inventory-balance.service";
 import { TerritoryBalanceService } from "../../territory/application/territory-balance.service";
 import { AdminBalanceService } from "./admin-balance.service";
+
+function createCustodyBalanceServiceMock() {
+  return {
+    listStatusConfigs: vi.fn().mockReturnValue([
+      {
+        statusType: "jail",
+        label: "Jail",
+        escalationEnabled: true,
+        escalationPercentage: 0.1,
+        minimumPrice: null,
+        roundingRule: "ceil",
+        levels: [
+          {
+            level: 1,
+            rank: "Scum",
+            basePricePerMinute: 100
+          }
+        ]
+      },
+      {
+        statusType: "hospital",
+        label: "Hospital",
+        escalationEnabled: true,
+        escalationPercentage: 0.1,
+        minimumPrice: null,
+        roundingRule: "ceil",
+        levels: [
+          {
+            level: 1,
+            rank: "Scum",
+            basePricePerMinute: 125
+          }
+        ]
+      }
+    ]),
+    updateBalances: vi.fn()
+  } as unknown as CustodyBalanceService;
+}
 
 describe("AdminBalanceService", () => {
   it("returns all configured balance sections", async () => {
@@ -58,7 +97,8 @@ describe("AdminBalanceService", () => {
             armorStats: null
           }
         ])
-      } as unknown as InventoryBalanceService
+      } as unknown as InventoryBalanceService,
+      createCustodyBalanceServiceMock()
     );
 
     const result = await service.getAllSections();
@@ -66,7 +106,8 @@ describe("AdminBalanceService", () => {
     expect(result.map((section) => section.section)).toEqual([
       "crimes",
       "districts",
-      "shop-items"
+      "shop-items",
+      "custody"
     ]);
   });
 
@@ -90,7 +131,8 @@ describe("AdminBalanceService", () => {
       {
         listShopItemBalances: vi.fn(),
         updateShopItemBalances: vi.fn()
-      } as unknown as InventoryBalanceService
+      } as unknown as InventoryBalanceService,
+      createCustodyBalanceServiceMock()
     );
 
     await expect(
@@ -152,7 +194,8 @@ describe("AdminBalanceService", () => {
       {
         listShopItemBalances: vi.fn(),
         updateShopItemBalances: vi.fn()
-      } as unknown as InventoryBalanceService
+      } as unknown as InventoryBalanceService,
+      createCustodyBalanceServiceMock()
     );
 
     await service.updateSection(
@@ -227,7 +270,8 @@ describe("AdminBalanceService", () => {
       } as unknown as TerritoryBalanceService,
       {
         listShopItemBalances: vi.fn().mockReturnValue([])
-      } as unknown as InventoryBalanceService
+      } as unknown as InventoryBalanceService,
+      createCustodyBalanceServiceMock()
     );
 
     const result = await service.getAuditLog({

@@ -21,6 +21,8 @@ import {
 } from "../domain/player.errors";
 import type {
   CreatePlayerCommand,
+  PlayerCustodyBuyoutInput,
+  PlayerCustodyEntryInput,
   PlayerCustodyStatusUpdate,
   PlayerProgressionSnapshot,
   PlayerResourceDelta,
@@ -153,5 +155,25 @@ export class PlayerService {
     }
 
     return player;
+  }
+
+  async applyCustodyEntry(
+    playerId: string,
+    input: PlayerCustodyEntryInput
+  ): Promise<PlayerSnapshot> {
+    const player = await this.playerRepository.applyCustodyEntry(playerId, input);
+
+    if (!player) {
+      throw new NotFoundException(new PlayerNotFoundError(playerId).message);
+    }
+
+    return player;
+  }
+
+  async buyOutCustodyStatus(
+    playerId: string,
+    input: PlayerCustodyBuyoutInput
+  ): Promise<PlayerSnapshot | null> {
+    return this.playerRepository.buyOutCustodyStatus(playerId, input);
   }
 }

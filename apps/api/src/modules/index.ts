@@ -1,6 +1,7 @@
 export const backendModulePaths = [
   "auth",
   "player",
+  "custody",
   "stats",
   "crime",
   "jail",

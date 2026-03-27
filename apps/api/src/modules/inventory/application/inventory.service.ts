@@ -8,8 +8,10 @@ import {
 import { PlayerService } from "../../player/application/player.service";
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
 import {
-  getItemById,
-  starterItemCatalog
+  getConsumableItemById,
+  getEquipmentItemById,
+  getShopItemById,
+  starterShopItemCatalog
 } from "../domain/inventory.catalog";
 import {
   InvalidEquipmentSlotError,
@@ -30,12 +32,13 @@ import {
   validateEquipmentSlotCompatibility
 } from "../domain/inventory.policy";
 import type {
+  ConsumableEffect,
   EquipmentSlot,
   EquippedInventory,
   InventoryCombatLoadout,
   InventoryListItem,
   PlayerShopItem,
-  PurchaseInventoryItemResult,
+  PurchaseShopItemResult,
   ShopCatalogItem
 } from "../domain/inventory.types";
 import {
@@ -55,7 +58,7 @@ export class InventoryService {
   ) {}
 
   listShopItems(): ShopCatalogItem[] {
-    return starterItemCatalog.map((item) =>
+    return starterShopItemCatalog.map((item) =>
       toShopCatalogItem(item, this.getUnlockRankName(item.unlockLevel))
     );
   }
@@ -63,7 +66,7 @@ export class InventoryService {
   async listShopItemsForPlayer(playerId: string): Promise<PlayerShopItem[]> {
     const progression = await this.playerService.getPlayerProgression(playerId);
 
-    return starterItemCatalog.map((item) =>
+    return starterShopItemCatalog.map((item) =>
       toPlayerShopItem(
         item,
         this.getUnlockRankName(item.unlockLevel),
@@ -93,7 +96,7 @@ export class InventoryService {
             inventoryItemId: equippedItems.weapon.id,
             itemId: equippedItems.weapon.itemId,
             attackBonus:
-              getItemById(equippedItems.weapon.itemId)?.weaponStats?.damageBonus ?? 0
+              getEquipmentItemById(equippedItems.weapon.itemId)?.weaponStats?.damageBonus ?? 0
           }
         : null,
       armor: equippedItems.armor
@@ -101,7 +104,7 @@ export class InventoryService {
             inventoryItemId: equippedItems.armor.id,
             itemId: equippedItems.armor.itemId,
             defenseBonus:
-              getItemById(equippedItems.armor.itemId)?.armorStats?.damageReduction ?? 0
+              getEquipmentItemById(equippedItems.armor.itemId)?.armorStats?.damageReduction ?? 0
           }
         : null
     };
@@ -110,8 +113,8 @@ export class InventoryService {
   async purchaseItem(
     playerId: string,
     itemId: string
-  ): Promise<PurchaseInventoryItemResult> {
-    const item = getItemById(itemId);
+  ): Promise<PurchaseShopItemResult> {
+    const item = getShopItemById(itemId);
 
     if (!item) {
       throw new NotFoundException(new InventoryItemNotFoundError(itemId).message);
@@ -127,6 +130,10 @@ export class InventoryService {
           this.getUnlockRankName(item.unlockLevel)
         ).message
       );
+    }
+
+    if (item.delivery === "instant") {
+      return this.purchaseConsumable(playerId, item.id);
     }
 
     try {
@@ -147,7 +154,14 @@ export class InventoryService {
         itemId: purchaseResult.ownedItem.itemId,
         price: purchaseResult.ownedItem.price
       });
-      return purchaseResult;
+      return {
+        delivery: "inventory",
+        playerCashAfterPurchase: purchaseResult.playerCashAfterPurchase,
+        playerEnergyAfterPurchase: null,
+        playerHealthAfterPurchase: null,
+        ownedItem: purchaseResult.ownedItem,
+        consumedItem: null
+      };
     } catch (error) {
       if (error instanceof InsufficientCashForItemError) {
         throw new BadRequestException(error.message);
@@ -176,7 +190,7 @@ export class InventoryService {
       );
     }
 
-    const item = getItemById(ownedItem.itemId);
+    const item = getEquipmentItemById(ownedItem.itemId);
 
     if (!item) {
       throw new NotFoundException(
@@ -242,6 +256,67 @@ export class InventoryService {
     }
 
     return buildInventoryList([unequippedItem])[0] ?? null;
+  }
+
+  private async purchaseConsumable(
+    playerId: string,
+    itemId: string
+  ): Promise<PurchaseShopItemResult> {
+    const item = getConsumableItemById(itemId);
+
+    if (!item) {
+      throw new NotFoundException(new InventoryItemNotFoundError(itemId).message);
+    }
+
+    const player = await this.playerService.getPlayerById(playerId);
+
+    if (player.cash < item.price) {
+      throw new BadRequestException(new InsufficientCashForItemError(item.id).message);
+    }
+
+    const delta = this.toConsumableResourceDelta(item.consumableEffects);
+    const updatedPlayer = await this.playerService.applyResourceDelta(playerId, {
+      cash: -item.price,
+      energy: delta.energy,
+      health: delta.health
+    });
+
+    return {
+      delivery: "instant",
+      playerCashAfterPurchase: updatedPlayer.cash,
+      playerEnergyAfterPurchase: updatedPlayer.energy,
+      playerHealthAfterPurchase: updatedPlayer.health,
+      ownedItem: null,
+      consumedItem: toShopCatalogItem(item, this.getUnlockRankName(item.unlockLevel))
+    };
+  }
+
+  private toConsumableResourceDelta(
+    effects: readonly ConsumableEffect[]
+  ): { energy: number; health: number } {
+    return effects.reduce(
+      (total, effect) => {
+        if (effect.type !== "resource") {
+          return total;
+        }
+
+        if (effect.resource === "energy") {
+          return {
+            ...total,
+            energy: total.energy + effect.amount
+          };
+        }
+
+        return {
+          ...total,
+          health: total.health + effect.amount
+        };
+      },
+      {
+        energy: 0,
+        health: 0
+      }
+    );
   }
 
   private parseSlotOrThrow(slot: string): EquipmentSlot {

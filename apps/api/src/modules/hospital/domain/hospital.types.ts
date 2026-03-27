@@ -3,4 +3,5 @@ export interface HospitalStatus {
   active: boolean;
   until: Date | null;
   remainingSeconds: number;
+  reason?: string | null;
 }

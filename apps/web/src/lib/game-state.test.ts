@@ -296,11 +296,13 @@ describe("game-state helpers", () => {
         type: "weapon",
         category: "handguns",
         price: 500,
+        delivery: "inventory",
         equipSlot: "weapon",
         unlockLevel: 1,
         unlockRank: "Thug",
         weaponStats: { damageBonus: 2 },
         armorStats: null,
+        consumableEffects: null,
         isUnlocked: true,
         isLocked: false
       },
@@ -310,11 +312,13 @@ describe("game-state helpers", () => {
         type: "armor",
         category: "armor",
         price: 1200,
+        delivery: "inventory",
         equipSlot: "armor",
         unlockLevel: 5,
         unlockRank: "Soldier",
         weaponStats: null,
         armorStats: { damageReduction: 3 },
+        consumableEffects: null,
         isUnlocked: false,
         isLocked: true
       }

@@ -24,6 +24,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
     "dev": "tsx watch src/main.ts",
     "lint": "node -e \"console.log('lint not yet wired')\"",
     "prisma:generate": "pnpm exec prisma generate",

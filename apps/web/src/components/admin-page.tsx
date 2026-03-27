@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type {
   AdminBalanceAuditEntry,
   AdminBalanceSectionKey,
   AdminBalanceSectionView,
+  CustodyBalanceEntry,
   CrimeBalanceEntry,
   DistrictBalanceEntry,
   Season,
@@ -31,7 +32,8 @@ const auditFilterOptions: Array<{ value: "all" | AdminBalanceSectionKey; label: 
   { value: "all", label: "All sections" },
   { value: "crimes", label: "Crimes" },
   { value: "districts", label: "Districts" },
-  { value: "shop-items", label: "Shop items" }
+  { value: "shop-items", label: "Shop items" },
+  { value: "custody", label: "Custody" }
 ];
 
 type SaveState = Record<string, boolean>;
@@ -42,6 +44,12 @@ type CrimeEditableField =
   | "cashRewardMax"
   | "respectReward";
 type DistrictEditableField = "payoutAmount" | "payoutCooldownMinutes";
+type CustodyEditableField =
+  | "escalationEnabled"
+  | "escalationPercentage"
+  | "minimumPrice"
+  | "roundingRule";
+type ShopItemFilter = "all" | "weapons" | "drugs";
 
 interface CreateSeasonFormState {
   name: string;
@@ -72,11 +80,31 @@ export function AdminPage() {
   const [isRefreshingAudit, setIsRefreshingAudit] = useState(false);
   const [isCreatingSeason, setIsCreatingSeason] = useState(false);
   const [seasonActionId, setSeasonActionId] = useState<string | null>(null);
+  const [shopItemFilter, setShopItemFilter] = useState<ShopItemFilter>("all");
   const [seasonForm, setSeasonForm] = useState<CreateSeasonFormState>({
     name: "",
     startsAt: "",
     endsAt: ""
   });
+
+  const shopItemSection = useMemo(
+    () => sections.find((section) => section.section === "shop-items") ?? null,
+    [sections]
+  );
+
+  const filteredShopEntries = useMemo(() => {
+    const entries = shopItemSection?.entries ?? [];
+
+    if (shopItemFilter === "all") {
+      return entries;
+    }
+
+    return entries.filter((entry) =>
+      shopItemFilter === "drugs"
+        ? entry.category === "drugs"
+        : entry.category !== "drugs"
+    );
+  }, [shopItemFilter, shopItemSection]);
 
   useEffect(() => {
     if (!accessToken || !account?.isAdmin) {
@@ -155,6 +183,56 @@ export function AdminPage() {
               ...section,
               entries: section.entries.map((entry) =>
                 entry.id === entryId ? { ...entry, price: value } : entry
+              )
+            }
+      )
+    );
+  }
+
+  function updateCustodyEntry(
+    entryId: CustodyBalanceEntry["id"],
+    field: CustodyEditableField,
+    value: boolean | number | "ceil" | null
+  ) {
+    setSections((currentSections) =>
+      currentSections.map((section) =>
+        section.section !== "custody"
+          ? section
+          : {
+              ...section,
+              entries: section.entries.map((entry) =>
+                entry.id === entryId ? { ...entry, [field]: value } : entry
+              )
+            }
+      )
+    );
+  }
+
+  function updateCustodyLevelEntry(
+    entryId: CustodyBalanceEntry["id"],
+    level: number,
+    basePricePerMinute: number
+  ) {
+    setSections((currentSections) =>
+      currentSections.map((section) =>
+        section.section !== "custody"
+          ? section
+          : {
+              ...section,
+              entries: section.entries.map((entry) =>
+                entry.id !== entryId
+                  ? entry
+                  : {
+                      ...entry,
+                      levels: entry.levels.map((levelEntry) =>
+                        levelEntry.level === level
+                          ? {
+                              ...levelEntry,
+                              basePricePerMinute
+                            }
+                          : levelEntry
+                      )
+                    }
               )
             }
       )
@@ -307,6 +385,52 @@ export function AdminPage() {
     } catch (nextError) {
       setPageError(
         nextError instanceof ApiError ? nextError.message : "Unable to save shop item price."
+      );
+    } finally {
+      setSaveState((current) => ({ ...current, [saveKey]: false }));
+    }
+  }
+
+  async function saveCustody(entry: CustodyBalanceEntry) {
+    if (!accessToken) {
+      setPageError("Authentication is required.");
+      return;
+    }
+
+    const saveKey = `custody:${entry.id}`;
+    setSaveState((current) => ({ ...current, [saveKey]: true }));
+    setPageError(null);
+
+    try {
+      const nextSection = await gameApi.admin.updateBalance(
+        {
+          section: "custody",
+          body: {
+            entries: [
+              {
+                statusType: entry.id,
+                escalationEnabled: entry.escalationEnabled,
+                escalationPercentage: entry.escalationPercentage,
+                minimumPrice: entry.minimumPrice,
+                roundingRule: entry.roundingRule,
+                levels: entry.levels.map((level) => ({
+                  level: level.level,
+                  basePricePerMinute: level.basePricePerMinute
+                }))
+              }
+            ]
+          }
+        },
+        accessToken
+      );
+
+      replaceSection(nextSection);
+      await refreshAudit();
+    } catch (nextError) {
+      setPageError(
+        nextError instanceof ApiError
+          ? nextError.message
+          : "Unable to save custody buyout settings."
       );
     } finally {
       setSaveState((current) => ({ ...current, [saveKey]: false }));
@@ -674,14 +798,42 @@ export function AdminPage() {
               <h2>Starter shop</h2>
             </div>
             <span className="status-pill">
-              {sections.find((section) => section.section === "shop-items")?.entries.length ?? 0} entries
+              {filteredShopEntries.length} visible
             </span>
           </div>
 
+          <div className="shop-category-tabs">
+            <button
+              className={`button button-secondary shop-category-tab${
+                shopItemFilter === "all" ? " is-active" : ""
+              }`}
+              type="button"
+              onClick={() => setShopItemFilter("all")}
+            >
+              All ({shopItemSection?.entries.length ?? 0})
+            </button>
+            <button
+              className={`button button-secondary shop-category-tab${
+                shopItemFilter === "weapons" ? " is-active" : ""
+              }`}
+              type="button"
+              onClick={() => setShopItemFilter("weapons")}
+            >
+              Weapons ({(shopItemSection?.entries.filter((entry) => entry.category !== "drugs").length ?? 0)})
+            </button>
+            <button
+              className={`button button-secondary shop-category-tab${
+                shopItemFilter === "drugs" ? " is-active" : ""
+              }`}
+              type="button"
+              onClick={() => setShopItemFilter("drugs")}
+            >
+              Drugs ({(shopItemSection?.entries.filter((entry) => entry.category === "drugs").length ?? 0)})
+            </button>
+          </div>
+
           <div className="admin-entry-list">
-            {sections
-              .find((section) => section.section === "shop-items")
-              ?.entries.map((entry) => {
+            {filteredShopEntries.map((entry) => {
                 const saveKey = `shop-items:${entry.id}`;
 
                 return (
@@ -690,7 +842,7 @@ export function AdminPage() {
                       <div>
                         <h3>{entry.name}</h3>
                         <p className="muted">
-                          {entry.id} | {entry.type}
+                          {entry.id} | {entry.type} | {entry.category} | {entry.delivery}
                           {entry.equipSlot ? ` | ${entry.equipSlot}` : ""}
                         </p>
                       </div>
@@ -717,7 +869,154 @@ export function AdminPage() {
                       />
                     </label>
 
+                    {entry.consumableEffects ? (
+                      <p className="muted">
+                        Effects: {formatConsumableEffects(entry)}
+                      </p>
+                    ) : (
+                      <p className="muted">Equipment item for the {entry.equipSlot} slot.</p>
+                    )}
                     <p className="muted">Current price: {formatMoney(entry.price)}</p>
+                  </div>
+                );
+              })}
+          </div>
+        </article>
+
+        <article className="panel stack">
+          <div className="split-row">
+            <div>
+              <p className="eyebrow">Balance</p>
+              <h2>Custody buyouts</h2>
+            </div>
+            <span className="status-pill">
+              {sections.find((section) => section.section === "custody")?.entries.length ?? 0} entries
+            </span>
+          </div>
+
+          <div className="admin-entry-list">
+            {sections
+              .find((section) => section.section === "custody")
+              ?.entries.map((entry) => {
+                const saveKey = `custody:${entry.id}`;
+
+                return (
+                  <div key={entry.id} className="subpanel stack admin-entry-card">
+                    <div className="split-row">
+                      <div>
+                        <h3>{entry.name}</h3>
+                        <p className="muted">{entry.id}</p>
+                      </div>
+                      <button
+                        className="button"
+                        type="button"
+                        disabled={saveState[saveKey] || !accessToken}
+                        onClick={() => {
+                          void saveCustody(entry);
+                        }}
+                      >
+                        {saveState[saveKey] ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+
+                    <div className="stats-grid compact">
+                      <label className="checkbox-row">
+                        <input
+                          checked={entry.escalationEnabled}
+                          type="checkbox"
+                          onChange={(event) => {
+                            updateCustodyEntry(
+                              entry.id,
+                              "escalationEnabled",
+                              event.target.checked
+                            );
+                          }}
+                        />
+                        <span>Escalation enabled</span>
+                      </label>
+                      <label className="field">
+                        <span>Escalation percentage</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          value={entry.escalationPercentage}
+                          onChange={(event) => {
+                            updateCustodyEntry(
+                              entry.id,
+                              "escalationPercentage",
+                              Number(event.target.value)
+                            );
+                          }}
+                        />
+                      </label>
+                      <label className="field">
+                        <span>Minimum price</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={entry.minimumPrice ?? ""}
+                          placeholder="Optional"
+                          onChange={(event) => {
+                            updateCustodyEntry(
+                              entry.id,
+                              "minimumPrice",
+                              event.target.value === ""
+                                ? null
+                                : Number(event.target.value)
+                            );
+                          }}
+                        />
+                      </label>
+                      <label className="field">
+                        <span>Rounding rule</span>
+                        <select
+                          value={entry.roundingRule}
+                          onChange={(event) => {
+                            updateCustodyEntry(
+                              entry.id,
+                              "roundingRule",
+                              event.target.value as "ceil"
+                            );
+                          }}
+                        >
+                          <option value="ceil">Always round up</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="admin-entry-list">
+                      {entry.levels.map((levelEntry) => (
+                        <div key={levelEntry.level} className="subpanel stack">
+                          <div className="split-row">
+                            <div>
+                              <h3>
+                                Level {levelEntry.level} - {levelEntry.rank}
+                              </h3>
+                            </div>
+                            <span className="status-pill">
+                              {formatMoney(levelEntry.basePricePerMinute)}/min
+                            </span>
+                          </div>
+                          <label className="field">
+                            <span>Base price per minute</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={levelEntry.basePricePerMinute}
+                              onChange={(event) => {
+                                updateCustodyLevelEntry(
+                                  entry.id,
+                                  levelEntry.level,
+                                  Number(event.target.value)
+                                );
+                              }}
+                            />
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
@@ -1070,4 +1369,14 @@ function formatAuditValue(value: Record<string, number | string | null>): string
   return Object.entries(value)
     .map(([key, entryValue]) => `${key}: ${String(entryValue)}`)
     .join(", ");
+}
+
+function formatConsumableEffects(entry: ShopItemBalanceEntry): string {
+  if (!entry.consumableEffects || entry.consumableEffects.length === 0) {
+    return "No direct effects";
+  }
+
+  return entry.consumableEffects
+    .map((effect) => `+${effect.amount} ${effect.resource}`)
+    .join(" / ");
 }

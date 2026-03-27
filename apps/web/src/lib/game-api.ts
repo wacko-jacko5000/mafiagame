@@ -7,6 +7,8 @@ import type {
   AuthSession,
   CrimeDefinition,
   CrimeExecutionResult,
+  CustodyBuyoutResult,
+  CustodyBuyoutStatus,
   District,
   DistrictPayoutClaimResult,
   DistrictWar,
@@ -92,6 +94,22 @@ type AdminBalanceUpdatePayload =
           price: number;
         }>;
       };
+    }
+  | {
+      section: "custody";
+      body: {
+        entries: Array<{
+          statusType: "jail" | "hospital";
+          escalationEnabled?: boolean;
+          escalationPercentage?: number;
+          minimumPrice?: number | null;
+          roundingRule?: "ceil";
+          levels?: Array<{
+            level: number;
+            basePricePerMinute: number;
+          }>;
+        }>;
+      };
     };
 
 export const gameApi = {
@@ -130,6 +148,32 @@ export const gameApi = {
     },
     execute(accessToken: string, crimeId: string) {
       return apiRequest<CrimeExecutionResult>(`/api/me/crimes/${crimeId}/execute`, {
+        method: "POST",
+        accessToken
+      });
+    }
+  },
+  jail: {
+    getCurrentStatus(accessToken: string) {
+      return apiRequest<CustodyBuyoutStatus>("/api/me/jail/status", {
+        accessToken
+      });
+    },
+    buyout(accessToken: string) {
+      return apiRequest<CustodyBuyoutResult>("/api/me/jail/buyout", {
+        method: "POST",
+        accessToken
+      });
+    }
+  },
+  hospital: {
+    getCurrentStatus(accessToken: string) {
+      return apiRequest<CustodyBuyoutStatus>("/api/me/hospital/status", {
+        accessToken
+      });
+    },
+    buyout(accessToken: string) {
+      return apiRequest<CustodyBuyoutResult>("/api/me/hospital/buyout", {
         method: "POST",
         accessToken
       });

@@ -8,6 +8,7 @@ import { InventoryService } from "./inventory.service";
 
 function createPlayerServiceMock() {
   return {
+    applyResourceDelta: vi.fn(),
     getPlayerById: vi.fn(),
     getPlayerProgression: vi.fn(),
     getRankNameForLevel: vi.fn((level: number) => {
@@ -162,7 +163,10 @@ describe("InventoryService", () => {
       progressPercent: 0
     });
     vi.mocked(repository.purchaseItem).mockResolvedValue({
+      delivery: "inventory",
       playerCashAfterPurchase: 2100,
+      playerEnergyAfterPurchase: null,
+      playerHealthAfterPurchase: null,
       ownedItem: {
         id: "owned-1",
         playerId,
@@ -180,7 +184,8 @@ describe("InventoryService", () => {
         },
         armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
-      }
+      },
+      consumedItem: null
     });
 
     const domainEventsService = createDomainEventsServiceMock();
@@ -195,6 +200,7 @@ describe("InventoryService", () => {
       })
     });
     expect(result.playerCashAfterPurchase).toBe(2100);
+    expect(result.delivery).toBe("inventory");
     expect(domainEventsService.publish).toHaveBeenCalledWith({
       type: "inventory.item_purchased",
       occurredAt: expect.any(Date),
@@ -202,6 +208,74 @@ describe("InventoryService", () => {
       inventoryItemId: "owned-1",
       itemId: "rusty-knife",
       price: 400
+    });
+  });
+
+  it("past een directe consumable purchase toe en clampet energy op het maximum", async () => {
+    const playerId = crypto.randomUUID();
+    const playerService = createPlayerServiceMock();
+    vi.mocked(playerService.getPlayerProgression).mockResolvedValue({
+      level: 1,
+      rank: "Scum",
+      currentRespect: 0,
+      currentLevelMinRespect: 0,
+      nextLevel: 2,
+      nextRank: "Empty Suit",
+      nextLevelRespectRequired: 100,
+      respectToNextLevel: 100,
+      progressPercent: 0
+    });
+    vi.mocked(playerService.getPlayerById).mockResolvedValue({
+      id: playerId,
+      displayName: "Don Luca",
+      cash: 900,
+      respect: 0,
+      energy: 75,
+      health: 100,
+      jailedUntil: null,
+      hospitalizedUntil: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    vi.mocked(playerService.applyResourceDelta).mockResolvedValue({
+      id: playerId,
+      displayName: "Don Luca",
+      cash: 400,
+      respect: 0,
+      energy: 100,
+      health: 100,
+      jailedUntil: null,
+      hospitalizedUntil: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const repository = createInventoryRepositoryMock();
+    const service = new InventoryService(
+      playerService,
+      createDomainEventsServiceMock(),
+      repository
+    );
+
+    const result = await service.purchaseItem(playerId, "cocaine");
+
+    expect(playerService.applyResourceDelta).toHaveBeenCalledWith(playerId, {
+      cash: -500,
+      energy: 40,
+      health: 0
+    });
+    expect(repository.purchaseItem).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      delivery: "instant",
+      playerCashAfterPurchase: 400,
+      playerEnergyAfterPurchase: 100,
+      playerHealthAfterPurchase: 100,
+      ownedItem: null,
+      consumedItem: {
+        id: "cocaine",
+        category: "drugs",
+        delivery: "instant"
+      }
     });
   });
 

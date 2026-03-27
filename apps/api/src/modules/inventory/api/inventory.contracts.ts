@@ -4,15 +4,17 @@ export type ShopItemCategoryResponseBody =
   | "assault_rifle"
   | "sniper"
   | "special"
-  | "armor";
+  | "armor"
+  | "drugs";
 
 export interface ShopItemResponseBody {
   id: string;
   name: string;
-  type: "weapon" | "armor";
+  type: "weapon" | "armor" | "consumable";
   category: ShopItemCategoryResponseBody;
   price: number;
-  equipSlot: "weapon" | "armor";
+  delivery: "inventory" | "instant";
+  equipSlot: "weapon" | "armor" | null;
   unlockLevel: number;
   unlockRank: string;
   weaponStats: {
@@ -21,6 +23,11 @@ export interface ShopItemResponseBody {
   armorStats: {
     damageReduction: number;
   } | null;
+  consumableEffects: Array<{
+    type: "resource";
+    resource: "energy" | "health";
+    amount: number;
+  }> | null;
 }
 
 export interface PlayerShopItemResponseBody extends ShopItemResponseBody {
@@ -34,7 +41,7 @@ export interface PlayerInventoryItemResponseBody {
   itemId: string;
   name: string;
   type: "weapon" | "armor";
-  category: ShopItemCategoryResponseBody;
+  category: Exclude<ShopItemCategoryResponseBody, "drugs">;
   price: number;
   equipSlot: "weapon" | "armor";
   unlockLevel: number;
@@ -49,10 +56,27 @@ export interface PlayerInventoryItemResponseBody {
   acquiredAt: string;
 }
 
-export interface PurchaseItemResponseBody {
+export interface PurchaseInventoryItemResponseBody {
+  delivery: "inventory";
   playerCashAfterPurchase: number;
+  playerEnergyAfterPurchase: null;
+  playerHealthAfterPurchase: null;
   ownedItem: PlayerInventoryItemResponseBody;
+  consumedItem: null;
 }
+
+export interface PurchaseConsumableItemResponseBody {
+  delivery: "instant";
+  playerCashAfterPurchase: number;
+  playerEnergyAfterPurchase: number;
+  playerHealthAfterPurchase: number;
+  ownedItem: null;
+  consumedItem: ShopItemResponseBody;
+}
+
+export type PurchaseItemResponseBody =
+  | PurchaseInventoryItemResponseBody
+  | PurchaseConsumableItemResponseBody;
 
 export interface EquippedItemsResponseBody {
   weapon: PlayerInventoryItemResponseBody | null;

@@ -18,6 +18,10 @@ model Player {
   health            Int
   jailedUntil       DateTime?
   hospitalizedUntil DateTime?
+  jailEntryCount    Int       @default(0)
+  hospitalEntryCount Int      @default(0)
+  jailReason        String?   @db.VarChar(160)
+  hospitalReason    String?   @db.VarChar(160)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   account           Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
@@ -293,6 +297,38 @@ model ShopItemBalance {
   updatedAt  DateTime @updatedAt
 
   @@map("shop_item_balances")
+}
+
+enum CustodyStatusType {
+  jail
+  hospital
+}
+
+enum CustodyBuyoutRoundingRule {
+  ceil
+}
+
+model CustodyBuyoutConfig {
+  statusType           CustodyStatusType         @id
+  escalationEnabled    Boolean                   @default(true)
+  escalationPercentage Float                     @default(0.1)
+  minimumPrice         Int?
+  roundingRule         CustodyBuyoutRoundingRule @default(ceil)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  @@map("custody_buyout_configs")
+}
+
+model CustodyBuyoutLevelBalance {
+  statusType         CustodyStatusType
+  level              Int
+  basePricePerMinute Int
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@id([statusType, level])
+  @@map("custody_buyout_level_balances")
 }
 
 model BalanceChangeLog {

@@ -4,8 +4,13 @@ import type { Player } from "@prisma/client";
 import { PrismaService } from "../../../platform/database/prisma.service";
 import { InvalidPlayerResourceDeltaError } from "../domain/player.errors";
 import { playerEnergyRecoveryRules } from "../domain/player.constants";
-import { regeneratePlayerEnergy } from "../domain/player.policy";
+import {
+  derivePlayerProgression,
+  regeneratePlayerEnergy
+} from "../domain/player.policy";
 import type {
+  PlayerCustodyBuyoutInput,
+  PlayerCustodyEntryInput,
   PlayerCreationValues,
   PlayerCustodyStatusUpdate,
   PlayerResourceDelta,
@@ -17,6 +22,7 @@ interface PlayerPersistenceClient {
   player: {
     findUnique: PrismaService["player"]["findUnique"];
     update: PrismaService["player"]["update"];
+    updateMany: PrismaService["player"]["updateMany"];
   };
 }
 
@@ -32,6 +38,10 @@ function toPlayerSnapshot(player: Player): PlayerSnapshot {
     health: player.health,
     jailedUntil: player.jailedUntil,
     hospitalizedUntil: player.hospitalizedUntil,
+    jailEntryCount: player.jailEntryCount ?? 0,
+    hospitalEntryCount: player.hospitalEntryCount ?? 0,
+    jailReason: player.jailReason ?? null,
+    hospitalReason: player.hospitalReason ?? null,
     createdAt: player.createdAt,
     updatedAt: player.updatedAt
   };
@@ -64,7 +74,11 @@ export class PrismaPlayerRepository implements PlayerRepository {
         return null;
       }
 
-      const syncedPlayer = await this.synchronizeEnergy(tx, player, now);
+      const syncedPlayer = await this.synchronizeCustody(
+        tx,
+        await this.synchronizeEnergy(tx, player, now),
+        now
+      );
       return toPlayerSnapshot(syncedPlayer);
     });
   }
@@ -105,7 +119,12 @@ export class PrismaPlayerRepository implements PlayerRepository {
         return null;
       }
 
-      const syncedPlayer = await this.synchronizeEnergy(tx, player, now);
+      const syncedPlayer = await this.synchronizeCustody(
+        tx,
+        await this.synchronizeEnergy(tx, player, now),
+        now
+      );
+      const previousLevel = derivePlayerProgression(syncedPlayer.respect).level;
       const nextState = {
         cash: syncedPlayer.cash + (delta.cash ?? 0),
         respect: syncedPlayer.respect + (delta.respect ?? 0),
@@ -115,6 +134,8 @@ export class PrismaPlayerRepository implements PlayerRepository {
         ),
         health: syncedPlayer.health + (delta.health ?? 0)
       };
+      const nextLevel = derivePlayerProgression(nextState.respect).level;
+      const resetCustodyEscalation = nextLevel > previousLevel;
 
       if (
         nextState.cash < 0 ||
@@ -133,6 +154,12 @@ export class PrismaPlayerRepository implements PlayerRepository {
         },
         data: {
           ...nextState,
+          ...(resetCustodyEscalation
+            ? {
+                jailEntryCount: 0,
+                hospitalEntryCount: 0
+              }
+            : {}),
           energyUpdatedAt:
             delta.energy === undefined ? syncedPlayer.energyUpdatedAt : now
         }
@@ -160,6 +187,97 @@ export class PrismaPlayerRepository implements PlayerRepository {
     }
   }
 
+  async applyCustodyEntry(
+    playerId: string,
+    input: PlayerCustodyEntryInput
+  ): Promise<PlayerSnapshot | null> {
+    try {
+      const updatedPlayer = await this.prismaService.player.update({
+        where: {
+          id: playerId
+        },
+        data:
+          input.statusType === "jail"
+            ? {
+                jailedUntil: input.until,
+                jailReason: input.reason,
+                jailEntryCount: {
+                  increment: 1
+                }
+              }
+            : {
+                hospitalizedUntil: input.until,
+                hospitalReason: input.reason,
+                hospitalEntryCount: {
+                  increment: 1
+                }
+              }
+      });
+
+      return toPlayerSnapshot(updatedPlayer);
+    } catch {
+      return null;
+    }
+  }
+
+  async buyOutCustodyStatus(
+    playerId: string,
+    input: PlayerCustodyBuyoutInput
+  ): Promise<PlayerSnapshot | null> {
+    return this.prismaService.$transaction(async (tx) => {
+      const updateResult = await tx.player.updateMany({
+        where:
+          input.statusType === "jail"
+            ? {
+                id: playerId,
+                cash: {
+                  gte: input.buyoutPrice
+                },
+                jailedUntil: {
+                  gt: input.now
+                }
+              }
+            : {
+                id: playerId,
+                cash: {
+                  gte: input.buyoutPrice
+                },
+                hospitalizedUntil: {
+                  gt: input.now
+                }
+              },
+        data:
+          input.statusType === "jail"
+            ? {
+                cash: {
+                  decrement: input.buyoutPrice
+                },
+                jailedUntil: null,
+                jailReason: null
+              }
+            : {
+                cash: {
+                  decrement: input.buyoutPrice
+                },
+                hospitalizedUntil: null,
+                hospitalReason: null
+              }
+      });
+
+      if (updateResult.count === 0) {
+        return null;
+      }
+
+      const updatedPlayer = await tx.player.findUnique({
+        where: {
+          id: playerId
+        }
+      });
+
+      return updatedPlayer ? toPlayerSnapshot(updatedPlayer) : null;
+    });
+  }
+
   private async synchronizeEnergy(
     tx: PlayerPersistenceClient,
     player: Player,
@@ -181,6 +299,42 @@ export class PrismaPlayerRepository implements PlayerRepository {
       data: {
         energy: regeneratedEnergy.energy,
         energyUpdatedAt: regeneratedEnergy.energyUpdatedAt
+      }
+    });
+  }
+
+  private async synchronizeCustody(
+    tx: PlayerPersistenceClient,
+    player: Player,
+    now: Date
+  ): Promise<Player> {
+    const jailExpired =
+      player.jailedUntil !== null && player.jailedUntil.getTime() <= now.getTime();
+    const hospitalExpired =
+      player.hospitalizedUntil !== null &&
+      player.hospitalizedUntil.getTime() <= now.getTime();
+
+    if (!jailExpired && !hospitalExpired) {
+      return player;
+    }
+
+    return tx.player.update({
+      where: {
+        id: player.id
+      },
+      data: {
+        ...(jailExpired
+          ? {
+              jailedUntil: null,
+              jailReason: null
+            }
+          : {}),
+        ...(hospitalExpired
+          ? {
+              hospitalizedUntil: null,
+              hospitalReason: null
+            }
+          : {})
       }
     });
   }

@@ -7,7 +7,7 @@ import type {
   EquipInventoryItemCommand,
   PlayerInventoryItemSnapshot,
   PurchaseInventoryItemCommand,
-  PurchaseInventoryItemResult
+  PurchaseEquipmentItemResult
 } from "../domain/inventory.types";
 import type { InventoryRepository } from "../application/inventory.repository";
 
@@ -121,7 +121,7 @@ export class PrismaInventoryRepository implements InventoryRepository {
 
   async purchaseItem(
     command: PurchaseInventoryItemCommand
-  ): Promise<PurchaseInventoryItemResult | null> {
+  ): Promise<PurchaseEquipmentItemResult | null> {
     const prismaClient = this.prismaService as unknown as InventoryPrismaClient;
 
     return prismaClient.$transaction(async (tx: InventoryPrismaTransaction) => {
@@ -156,11 +156,15 @@ export class PrismaInventoryRepository implements InventoryRepository {
       });
 
       return {
+        delivery: "inventory",
         playerCashAfterPurchase: updatedPlayer.cash,
+        playerEnergyAfterPurchase: null,
+        playerHealthAfterPurchase: null,
         ownedItem: toInventoryListItem(
           toPlayerInventoryItemSnapshot(ownedItem),
           command.item
-        )
+        ),
+        consumedItem: null
       };
     });
   }

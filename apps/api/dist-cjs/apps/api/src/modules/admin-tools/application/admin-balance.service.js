@@ -1,0 +1,349 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AdminBalanceService = void 0;
+const common_1 = require("@nestjs/common");
+const zod_1 = require("zod");
+const admin_balance_audit_repository_1 = require("./admin-balance-audit.repository");
+const crime_balance_service_1 = require("../../crime/application/crime-balance.service");
+const inventory_balance_service_1 = require("../../inventory/application/inventory-balance.service");
+const custody_balance_service_1 = require("../../custody/application/custody-balance.service");
+const territory_balance_service_1 = require("../../territory/application/territory-balance.service");
+const admin_balance_types_1 = require("../domain/admin-balance.types");
+const crimeUpdateSchema = zod_1.z.object({
+    crimes: zod_1.z.array(zod_1.z
+        .object({
+        id: zod_1.z.string().min(1),
+        energyCost: zod_1.z.number().int().positive().optional(),
+        successRate: zod_1.z.number().min(0).max(1).optional(),
+        cashRewardMin: zod_1.z.number().int().nonnegative().optional(),
+        cashRewardMax: zod_1.z.number().int().nonnegative().optional(),
+        respectReward: zod_1.z.number().int().nonnegative().optional()
+    })
+        .refine((value) => value.energyCost !== undefined ||
+        value.successRate !== undefined ||
+        value.cashRewardMin !== undefined ||
+        value.cashRewardMax !== undefined ||
+        value.respectReward !== undefined, {
+        message: "Each crime update must include at least one editable field."
+    }))
+});
+const districtUpdateSchema = zod_1.z.object({
+    districts: zod_1.z.array(zod_1.z
+        .object({
+        id: zod_1.z.string().min(1),
+        payoutAmount: zod_1.z.number().int().positive().optional(),
+        payoutCooldownMinutes: zod_1.z.number().int().positive().optional()
+    })
+        .refine((value) => value.payoutAmount !== undefined ||
+        value.payoutCooldownMinutes !== undefined, {
+        message: "Each district update must include at least one editable field."
+    }))
+});
+const shopItemUpdateSchema = zod_1.z.object({
+    items: zod_1.z.array(zod_1.z.object({
+        id: zod_1.z.string().min(1),
+        price: zod_1.z.number().int().positive()
+    }))
+});
+const custodyUpdateSchema = zod_1.z.object({
+    entries: zod_1.z.array(zod_1.z
+        .object({
+        statusType: zod_1.z.enum(["jail", "hospital"]),
+        escalationEnabled: zod_1.z.boolean().optional(),
+        escalationPercentage: zod_1.z.number().min(0).max(1).optional(),
+        minimumPrice: zod_1.z.number().int().nonnegative().nullable().optional(),
+        roundingRule: zod_1.z.enum(["ceil"]).optional(),
+        levels: zod_1.z
+            .array(zod_1.z.object({
+            level: zod_1.z.number().int().positive(),
+            basePricePerMinute: zod_1.z.number().int().positive()
+        }))
+            .optional()
+    })
+        .refine((value) => value.escalationEnabled !== undefined ||
+        value.escalationPercentage !== undefined ||
+        value.minimumPrice !== undefined ||
+        value.roundingRule !== undefined ||
+        (value.levels?.length ?? 0) > 0, {
+        message: "Each custody update must include at least one editable field."
+    }))
+});
+const auditQuerySchema = zod_1.z.object({
+    section: zod_1.z.enum(admin_balance_types_1.adminBalanceSections).optional(),
+    targetId: zod_1.z.string().min(1).optional(),
+    limit: zod_1.z.coerce.number().int().positive().max(100).default(20)
+});
+function toCrimeAuditValue(entry) {
+    return {
+        id: entry.id,
+        name: entry.name,
+        energyCost: entry.energyCost,
+        successRate: entry.successRate,
+        cashRewardMin: entry.cashRewardMin,
+        cashRewardMax: entry.cashRewardMax,
+        respectReward: entry.respectReward
+    };
+}
+function toDistrictAuditValue(entry) {
+    return {
+        id: entry.id,
+        name: entry.name,
+        payoutAmount: entry.payoutAmount,
+        payoutCooldownMinutes: entry.payoutCooldownMinutes
+    };
+}
+function toShopItemAuditValue(entry) {
+    return {
+        id: entry.id,
+        name: entry.name,
+        type: entry.type,
+        category: entry.category,
+        delivery: entry.delivery,
+        price: entry.price,
+        equipSlot: entry.equipSlot,
+        consumableEffects: entry.consumableEffects
+            ? JSON.stringify(entry.consumableEffects)
+            : null
+    };
+}
+function toCustodyAuditValue(entry) {
+    return {
+        id: entry.id,
+        name: entry.name,
+        escalationEnabled: entry.escalationEnabled ? "true" : "false",
+        escalationPercentage: entry.escalationPercentage,
+        minimumPrice: entry.minimumPrice,
+        roundingRule: entry.roundingRule,
+        levels: JSON.stringify(entry.levels.map((level) => ({
+            level: level.level,
+            rank: level.rank,
+            basePricePerMinute: level.basePricePerMinute
+        })))
+    };
+}
+let AdminBalanceService = class AdminBalanceService {
+    adminBalanceAuditRepository;
+    crimeBalanceService;
+    territoryBalanceService;
+    inventoryBalanceService;
+    custodyBalanceService;
+    constructor(adminBalanceAuditRepository, crimeBalanceService, territoryBalanceService, inventoryBalanceService, custodyBalanceService) {
+        this.adminBalanceAuditRepository = adminBalanceAuditRepository;
+        this.crimeBalanceService = crimeBalanceService;
+        this.territoryBalanceService = territoryBalanceService;
+        this.inventoryBalanceService = inventoryBalanceService;
+        this.custodyBalanceService = custodyBalanceService;
+    }
+    async getAllSections() {
+        return Promise.all(admin_balance_types_1.adminBalanceSections.map((section) => this.getSection(section)));
+    }
+    async getSection(section) {
+        const parsedSection = this.parseSection(section);
+        if (parsedSection === "crimes") {
+            return {
+                section: "crimes",
+                label: "Crime Catalog",
+                editableFields: [
+                    "energyCost",
+                    "successRate",
+                    "cashRewardMin",
+                    "cashRewardMax",
+                    "respectReward"
+                ],
+                entries: this.crimeBalanceService.listCrimeBalances().map((crime) => ({
+                    id: crime.id,
+                    name: crime.name,
+                    energyCost: crime.energyCost,
+                    successRate: crime.successRate,
+                    cashRewardMin: crime.minReward,
+                    cashRewardMax: crime.maxReward,
+                    respectReward: crime.respectReward
+                }))
+            };
+        }
+        if (parsedSection === "districts") {
+            const districts = await this.territoryBalanceService.listDistrictBalances();
+            return {
+                section: "districts",
+                label: "District Payouts",
+                editableFields: ["payoutAmount", "payoutCooldownMinutes"],
+                entries: districts.map((district) => ({
+                    id: district.id,
+                    name: district.name,
+                    payoutAmount: district.payoutAmount,
+                    payoutCooldownMinutes: district.payoutCooldownMinutes
+                }))
+            };
+        }
+        if (parsedSection === "custody") {
+            return {
+                section: "custody",
+                label: "Custody Buyouts",
+                editableFields: [
+                    "basePricePerMinute",
+                    "escalationEnabled",
+                    "escalationPercentage",
+                    "minimumPrice",
+                    "roundingRule"
+                ],
+                entries: this.custodyBalanceService.listStatusConfigs().map((entry) => ({
+                    id: entry.statusType,
+                    name: entry.label,
+                    escalationEnabled: entry.escalationEnabled,
+                    escalationPercentage: entry.escalationPercentage,
+                    minimumPrice: entry.minimumPrice,
+                    roundingRule: entry.roundingRule,
+                    levels: entry.levels.map((level) => ({
+                        level: level.level,
+                        rank: level.rank,
+                        basePricePerMinute: level.basePricePerMinute
+                    }))
+                }))
+            };
+        }
+        return {
+            section: "shop-items",
+            label: "Starter Shop Items",
+            editableFields: ["price"],
+            entries: this.inventoryBalanceService.listShopItemBalances().map((item) => ({
+                id: item.id,
+                name: item.name,
+                type: item.type,
+                category: item.category,
+                delivery: item.delivery,
+                price: item.price,
+                equipSlot: item.equipSlot,
+                consumableEffects: item.consumableEffects
+                    ? [...item.consumableEffects]
+                    : null
+            }))
+        };
+    }
+    async updateSection(section, payload, changedByAccountId) {
+        const parsedSection = this.parseSection(section);
+        if (parsedSection === "crimes") {
+            const updates = this.parsePayload(crimeUpdateSchema, payload);
+            const previousSection = await this.getSection(parsedSection);
+            await this.crimeBalanceService.updateCrimeBalances(updates.crimes);
+            const nextSection = await this.getSection(parsedSection);
+            await this.recordAuditEntries(parsedSection, updates.crimes.map((update) => update.id), previousSection, nextSection, changedByAccountId);
+            return nextSection;
+        }
+        if (parsedSection === "districts") {
+            const updates = this.parsePayload(districtUpdateSchema, payload);
+            const previousSection = await this.getSection(parsedSection);
+            await this.territoryBalanceService.updateDistrictBalances(updates.districts);
+            const nextSection = await this.getSection(parsedSection);
+            await this.recordAuditEntries(parsedSection, updates.districts.map((update) => update.id), previousSection, nextSection, changedByAccountId);
+            return nextSection;
+        }
+        if (parsedSection === "custody") {
+            const updates = this.parsePayload(custodyUpdateSchema, payload);
+            const previousSection = await this.getSection(parsedSection);
+            await this.custodyBalanceService.updateBalances(updates.entries);
+            const nextSection = await this.getSection(parsedSection);
+            await this.recordAuditEntries(parsedSection, updates.entries.map((update) => update.statusType), previousSection, nextSection, changedByAccountId);
+            return nextSection;
+        }
+        const updates = this.parsePayload(shopItemUpdateSchema, payload);
+        const previousSection = await this.getSection(parsedSection);
+        await this.inventoryBalanceService.updateShopItemBalances(updates.items);
+        const nextSection = await this.getSection(parsedSection);
+        await this.recordAuditEntries(parsedSection, updates.items.map((update) => update.id), previousSection, nextSection, changedByAccountId);
+        return nextSection;
+    }
+    async getAuditLog(query) {
+        const parsed = auditQuerySchema.safeParse(query);
+        if (!parsed.success) {
+            throw new common_1.BadRequestException(parsed.error.issues[0]?.message ?? "Invalid query.");
+        }
+        const entries = await this.adminBalanceAuditRepository.listEntries(parsed.data);
+        return entries.map((entry) => this.toAuditEntryView(entry));
+    }
+    parseSection(section) {
+        if (admin_balance_types_1.adminBalanceSections.includes(section)) {
+            return section;
+        }
+        throw new common_1.NotFoundException(`Balance section "${section}" was not found.`);
+    }
+    parsePayload(schema, payload) {
+        const parsed = schema.safeParse(payload);
+        if (!parsed.success) {
+            throw new common_1.BadRequestException(parsed.error.issues[0]?.message ?? "Invalid request body.");
+        }
+        return parsed.data;
+    }
+    toAuditEntryView(entry) {
+        return {
+            id: entry.id,
+            section: this.parseSection(entry.section),
+            targetId: entry.targetId,
+            changedByAccountId: entry.changedByAccountId,
+            previousValue: entry.previousValue,
+            newValue: entry.newValue,
+            changedAt: entry.changedAt.toISOString()
+        };
+    }
+    async recordAuditEntries(section, targetIds, previousSection, nextSection, changedByAccountId) {
+        await this.adminBalanceAuditRepository.createEntries(targetIds.map((targetId) => ({
+            section,
+            targetId,
+            changedByAccountId,
+            previousValue: this.getAuditValue(previousSection, targetId),
+            newValue: this.getAuditValue(nextSection, targetId)
+        })));
+    }
+    getAuditValue(section, targetId) {
+        if (section.section === "crimes") {
+            const entry = section.entries.find((item) => item.id === targetId);
+            if (!entry) {
+                throw new common_1.NotFoundException(`Balance entry "${targetId}" was not found.`);
+            }
+            return toCrimeAuditValue(entry);
+        }
+        if (section.section === "districts") {
+            const entry = section.entries.find((item) => item.id === targetId);
+            if (!entry) {
+                throw new common_1.NotFoundException(`Balance entry "${targetId}" was not found.`);
+            }
+            return toDistrictAuditValue(entry);
+        }
+        if (section.section === "custody") {
+            const entry = section.entries.find((item) => item.id === targetId);
+            if (!entry) {
+                throw new common_1.NotFoundException(`Balance entry "${targetId}" was not found.`);
+            }
+            return toCustodyAuditValue(entry);
+        }
+        const entry = section.entries.find((item) => item.id === targetId);
+        if (!entry) {
+            throw new common_1.NotFoundException(`Balance entry "${targetId}" was not found.`);
+        }
+        return toShopItemAuditValue(entry);
+    }
+};
+exports.AdminBalanceService = AdminBalanceService;
+exports.AdminBalanceService = AdminBalanceService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, common_1.Inject)(admin_balance_audit_repository_1.ADMIN_BALANCE_AUDIT_REPOSITORY)),
+    __param(1, (0, common_1.Inject)(crime_balance_service_1.CrimeBalanceService)),
+    __param(2, (0, common_1.Inject)(territory_balance_service_1.TerritoryBalanceService)),
+    __param(3, (0, common_1.Inject)(inventory_balance_service_1.InventoryBalanceService)),
+    __param(4, (0, common_1.Inject)(custody_balance_service_1.CustodyBalanceService)),
+    __metadata("design:paramtypes", [Object, crime_balance_service_1.CrimeBalanceService,
+        territory_balance_service_1.TerritoryBalanceService,
+        inventory_balance_service_1.InventoryBalanceService,
+        custody_balance_service_1.CustodyBalanceService])
+], AdminBalanceService);

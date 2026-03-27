@@ -17,7 +17,8 @@ export function getHospitalStatus(
       playerId,
       active: false,
       until: null,
-      remainingSeconds: 0
+      remainingSeconds: 0,
+      reason: null
     };
   }
 
@@ -27,6 +28,7 @@ export function getHospitalStatus(
     until: hospitalizedUntil,
     remainingSeconds: Math.ceil(
       (hospitalizedUntil.getTime() - now.getTime()) / 1000
-    )
+    ),
+    reason: null
   };
 }

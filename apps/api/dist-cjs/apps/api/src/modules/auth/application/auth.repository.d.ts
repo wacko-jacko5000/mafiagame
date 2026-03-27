@@ -1,0 +1,20 @@
+import type { AccountSnapshot } from "../domain/auth.types";
+export declare const AUTH_REPOSITORY: unique symbol;
+export interface CreateAccountValues {
+    email: string;
+    passwordHash: string;
+    isAdmin: boolean;
+}
+export interface CreateSessionValues {
+    accountId: string;
+    tokenHash: string;
+    expiresAt: Date;
+}
+export interface AuthRepository {
+    createAccount(values: CreateAccountValues): Promise<AccountSnapshot>;
+    createSession(values: CreateSessionValues): Promise<void>;
+    findAccountByEmail(email: string): Promise<AccountSnapshot | null>;
+    findAccountById(accountId: string): Promise<AccountSnapshot | null>;
+    markAccountAsAdmin(accountId: string): Promise<AccountSnapshot>;
+    findAccountByActiveSessionTokenHash(tokenHash: string, now: Date): Promise<AccountSnapshot | null>;
+}

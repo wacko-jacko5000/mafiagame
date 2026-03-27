@@ -1,0 +1,1 @@
+export declare const backendModulePaths: readonly ["auth", "player", "custody", "stats", "crime", "jail", "hospital", "combat", "inventory", "economy", "businesses", "gangs", "territory", "missions", "market", "notifications", "live-events", "leaderboard", "admin-tools"];

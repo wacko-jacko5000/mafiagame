@@ -6,7 +6,7 @@ import {
   NotFoundException
 } from "@nestjs/common";
 
-import { getItemById } from "../../inventory/domain/inventory.catalog";
+import { getEquipmentItemById } from "../../inventory/domain/inventory.catalog";
 import { PlayerService } from "../../player/application/player.service";
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
 import {
@@ -190,7 +190,7 @@ export class MarketService {
     createdAt: Date;
     soldAt: Date | null;
   }): MarketListingSummary {
-    const item = getItemById(listing.itemId);
+    const item = getEquipmentItemById(listing.itemId);
 
     if (!item) {
       throw new NotFoundException(`Market item definition "${listing.itemId}" was not found.`);

@@ -98,6 +98,7 @@ export class CrimeService {
       const jailStatusAfterFailure = await this.jailService.jailPlayer(
         playerId,
         crime.failureConsequence.durationSeconds,
+        `Mislukte misdaad: ${crime.name}.`,
         now
       );
 
@@ -116,6 +117,7 @@ export class CrimeService {
     const hospitalStatusAfterFailure = await this.hospitalService.hospitalizePlayer(
       playerId,
       crime.failureConsequence.durationSeconds,
+      `Gewond geraakt tijdens misdaad: ${crime.name}.`,
       now
     );
 

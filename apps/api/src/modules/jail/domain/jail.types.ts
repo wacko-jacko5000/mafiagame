@@ -3,4 +3,5 @@ export interface JailStatus {
   active: boolean;
   until: Date | null;
   remainingSeconds: number;
+  reason?: string | null;
 }

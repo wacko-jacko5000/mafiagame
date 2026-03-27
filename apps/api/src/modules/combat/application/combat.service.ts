@@ -8,6 +8,7 @@ import {
 import { HospitalService } from "../../hospital/application/hospital.service";
 import { InventoryService } from "../../inventory/application/inventory.service";
 import { JailService } from "../../jail/application/jail.service";
+import { PlayerActivityService } from "../../notifications/application/player-activity.service";
 import { PlayerService } from "../../player/application/player.service";
 import { PlayerNotFoundError } from "../../player/domain/player.errors";
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
@@ -39,6 +40,8 @@ export class CombatService {
     private readonly hospitalService: HospitalService,
     @Inject(InventoryService)
     private readonly inventoryService: InventoryService,
+    @Inject(PlayerActivityService)
+    private readonly playerActivityService: PlayerActivityService,
     @Inject(DomainEventsService)
     private readonly domainEventsService: DomainEventsService,
     @Inject(COMBAT_REPOSITORY)
@@ -100,6 +103,7 @@ export class CombatService {
       damageDealt: combatResolution.damageDealt,
       hospitalThreshold: combatRuleSet.hospitalThreshold,
       hospitalDurationSeconds: combatRuleSet.hospitalDurationSeconds,
+      hospitalReason: `Taken down in combat by ${attacker.displayName}.`,
       now
     });
 
@@ -108,6 +112,13 @@ export class CombatService {
     }
 
     if (persistenceResult.targetHospitalized) {
+      await this.playerActivityService.createActivity({
+        playerId: targetId,
+        type: "hospital.entered",
+        title: "You are in the hospital",
+        createdAt: now,
+        body: `Taken down by ${attacker.displayName}. Recovery lasts until ${persistenceResult.hospitalizedUntil?.toISOString()}.`
+      });
       await this.domainEventsService.publish({
         type: "combat.won",
         occurredAt: now,

@@ -1,12 +1,15 @@
 export type EquipmentSlot = "weapon" | "armor";
-export type ItemType = "weapon" | "armor";
-export type ShopItemCategory =
+export type EquipmentItemType = "weapon" | "armor";
+export type ShopItemType = EquipmentItemType | "consumable";
+export type EquipmentShopItemCategory =
   | "handguns"
   | "smg"
   | "assault_rifle"
   | "sniper"
   | "special"
   | "armor";
+export type ShopItemCategory = EquipmentShopItemCategory | "drugs";
+export type ConsumableEffectResource = "energy" | "health";
 
 export interface WeaponItemStats {
   damageBonus: number;
@@ -16,17 +19,48 @@ export interface ArmorItemStats {
   damageReduction: number;
 }
 
-export interface ItemDefinition {
+export interface ResourceConsumableEffect {
+  type: "resource";
+  resource: ConsumableEffectResource;
+  amount: number;
+}
+
+export type ConsumableEffect = ResourceConsumableEffect;
+
+interface BaseShopItemDefinition {
   id: string;
   name: string;
-  type: ItemType;
-  category: ShopItemCategory;
   price: number;
-  equipSlot: EquipmentSlot;
   unlockLevel: number;
+}
+
+export interface ItemDefinition extends BaseShopItemDefinition {
+  type: EquipmentItemType;
+  category: EquipmentShopItemCategory;
+  delivery?: "inventory";
+  equipSlot: EquipmentSlot;
   weaponStats: WeaponItemStats | null;
   armorStats: ArmorItemStats | null;
+  consumableEffects?: null;
 }
+
+export interface EquipmentItemDefinition extends ItemDefinition {
+  delivery: "inventory";
+  consumableEffects: null;
+}
+
+export interface ConsumableItemDefinition extends BaseShopItemDefinition {
+  type: "consumable";
+  category: "drugs";
+  delivery: "instant";
+  equipSlot: null;
+  weaponStats: null;
+  armorStats: null;
+  consumableEffects: readonly ConsumableEffect[];
+}
+
+export type ShopItemDefinition = EquipmentItemDefinition | ConsumableItemDefinition;
+export type ItemType = EquipmentItemType;
 
 export interface PlayerInventoryItemSnapshot {
   id: string;
@@ -44,8 +78,8 @@ export interface InventoryListItem {
   playerId: string;
   itemId: string;
   name: string;
-  type: ItemType;
-  category: ShopItemCategory;
+  type: EquipmentItemType;
+  category: EquipmentShopItemCategory;
   price: number;
   equipSlot: EquipmentSlot;
   unlockLevel: number;
@@ -58,31 +92,50 @@ export interface InventoryListItem {
 
 export interface PurchaseInventoryItemCommand {
   playerId: string;
-  item: ItemDefinition;
-}
-
-export interface PurchaseInventoryItemResult {
-  playerCashAfterPurchase: number;
-  ownedItem: InventoryListItem;
+  item: EquipmentItemDefinition;
 }
 
 export interface ShopCatalogItem {
   id: string;
   name: string;
-  type: ItemType;
+  type: ShopItemType;
   category: ShopItemCategory;
   price: number;
-  equipSlot: EquipmentSlot;
+  delivery: "inventory" | "instant";
+  equipSlot: EquipmentSlot | null;
   unlockLevel: number;
   unlockRank: string;
   weaponStats: WeaponItemStats | null;
   armorStats: ArmorItemStats | null;
+  consumableEffects: readonly ConsumableEffect[] | null;
 }
 
 export interface PlayerShopItem extends ShopCatalogItem {
   isUnlocked: boolean;
   isLocked: boolean;
 }
+
+export interface PurchaseEquipmentItemResult {
+  delivery: "inventory";
+  playerCashAfterPurchase: number;
+  playerEnergyAfterPurchase: number | null;
+  playerHealthAfterPurchase: number | null;
+  ownedItem: InventoryListItem;
+  consumedItem: null;
+}
+
+export interface PurchaseConsumableItemResult {
+  delivery: "instant";
+  playerCashAfterPurchase: number;
+  playerEnergyAfterPurchase: number;
+  playerHealthAfterPurchase: number;
+  ownedItem: null;
+  consumedItem: ShopCatalogItem;
+}
+
+export type PurchaseShopItemResult =
+  | PurchaseEquipmentItemResult
+  | PurchaseConsumableItemResult;
 
 export interface EquipInventoryItemCommand {
   playerId: string;

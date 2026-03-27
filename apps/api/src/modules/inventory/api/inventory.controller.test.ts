@@ -57,9 +57,15 @@ describe("InventoryController", () => {
         type: "weapon",
         category: "handguns",
         price: 400,
+        delivery: "inventory",
         equipSlot: "weapon",
         unlockLevel: 1,
-        unlockRank: "Scum"
+        unlockRank: "Scum",
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
+        consumableEffects: null
       }
     ]);
 
@@ -72,9 +78,15 @@ describe("InventoryController", () => {
         type: "weapon",
         category: "handguns",
         price: 400,
+        delivery: "inventory",
         equipSlot: "weapon",
         unlockLevel: 1,
-        unlockRank: "Scum"
+        unlockRank: "Scum",
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
+        consumableEffects: null
       }
     ]);
   });
@@ -93,9 +105,15 @@ describe("InventoryController", () => {
         type: "weapon",
         category: "handguns",
         price: 2400,
+        delivery: "inventory",
         equipSlot: "weapon",
         unlockLevel: 2,
         unlockRank: "Empty Suit",
+        weaponStats: {
+          damageBonus: 9
+        },
+        armorStats: null,
+        consumableEffects: null,
         isUnlocked: false,
         isLocked: true
       }
@@ -113,9 +131,15 @@ describe("InventoryController", () => {
         type: "weapon",
         category: "handguns",
         price: 2400,
+        delivery: "inventory",
         equipSlot: "weapon",
         unlockLevel: 2,
         unlockRank: "Empty Suit",
+        weaponStats: {
+          damageBonus: 9
+        },
+        armorStats: null,
+        consumableEffects: null,
         isUnlocked: false,
         isLocked: true
       }
@@ -131,9 +155,16 @@ describe("InventoryController", () => {
         itemId: "rusty-knife",
         name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
       }
     ]);
@@ -157,9 +188,16 @@ describe("InventoryController", () => {
         itemId: "rusty-knife",
         name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: "weapon",
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
       },
       armor: null
@@ -176,9 +214,16 @@ describe("InventoryController", () => {
         itemId: "rusty-knife",
         name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: "weapon",
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: "2026-03-16T20:00:00.000Z"
       },
       armor: null
@@ -188,18 +233,29 @@ describe("InventoryController", () => {
   it("purchases a shop item for a player", async () => {
     const playerId = crypto.randomUUID();
     vi.mocked(inventoryService.purchaseItem).mockResolvedValueOnce({
+      delivery: "inventory",
       playerCashAfterPurchase: 2100,
+      playerEnergyAfterPurchase: null,
+      playerHealthAfterPurchase: null,
       ownedItem: {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
         name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
-      }
+      },
+      consumedItem: null
     });
 
     const response = await request(app.getHttpServer())
@@ -207,18 +263,29 @@ describe("InventoryController", () => {
       .expect(201);
 
     expect(response.body).toEqual({
+      delivery: "inventory",
       playerCashAfterPurchase: 2100,
+      playerEnergyAfterPurchase: null,
+      playerHealthAfterPurchase: null,
       ownedItem: {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
         name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: "2026-03-16T20:00:00.000Z"
-      }
+      },
+      consumedItem: null
     });
   });
 
@@ -231,9 +298,16 @@ describe("InventoryController", () => {
       itemId: "rusty-knife",
       name: "Glock 17",
       type: "weapon",
+      category: "handguns",
       price: 400,
+      equipSlot: "weapon",
+      unlockLevel: 1,
       equippedSlot: "weapon",
       marketListingId: null,
+      weaponStats: {
+        damageBonus: 4
+      },
+      armorStats: null,
       acquiredAt: new Date("2026-03-16T20:00:00.000Z")
     });
 
@@ -252,9 +326,16 @@ describe("InventoryController", () => {
       itemId: "rusty-knife",
       name: "Glock 17",
       type: "weapon",
+      category: "handguns",
       price: 400,
+      equipSlot: "weapon",
+      unlockLevel: 1,
       equippedSlot: null,
       marketListingId: null,
+      weaponStats: {
+        damageBonus: 4
+      },
+      armorStats: null,
       acquiredAt: new Date("2026-03-16T20:00:00.000Z")
     });
 
@@ -273,18 +354,29 @@ describe("InventoryController", () => {
       playerId
     });
     vi.mocked(inventoryService.purchaseItem).mockResolvedValueOnce({
+      delivery: "inventory",
       playerCashAfterPurchase: 2100,
+      playerEnergyAfterPurchase: null,
+      playerHealthAfterPurchase: null,
       ownedItem: {
         id: "owned-1",
         playerId,
         itemId: "rusty-knife",
         name: "Glock 17",
         type: "weapon",
+        category: "handguns",
         price: 400,
+        equipSlot: "weapon",
+        unlockLevel: 1,
         equippedSlot: null,
         marketListingId: null,
+        weaponStats: {
+          damageBonus: 4
+        },
+        armorStats: null,
         acquiredAt: new Date("2026-03-16T20:00:00.000Z")
-      }
+      },
+      consumedItem: null
     });
 
     await request(app.getHttpServer())

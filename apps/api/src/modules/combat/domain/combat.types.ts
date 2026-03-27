@@ -31,6 +31,7 @@ export interface CombatAttackCommand {
   damageDealt: number;
   hospitalThreshold: number;
   hospitalDurationSeconds: number;
+  hospitalReason: string | null;
   now: Date;
 }
 

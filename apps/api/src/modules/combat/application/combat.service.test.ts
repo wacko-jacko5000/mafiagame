@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { HospitalService } from "../../hospital/application/hospital.service";
 import { InventoryService } from "../../inventory/application/inventory.service";
 import { JailService } from "../../jail/application/jail.service";
+import { PlayerActivityService } from "../../notifications/application/player-activity.service";
 import { PlayerService } from "../../player/application/player.service";
 import { CombatService } from "./combat.service";
 import type { CombatRepository } from "./combat.repository";
@@ -38,6 +39,12 @@ function createDomainEventsServiceMock() {
   } as unknown as DomainEventsService;
 }
 
+function createPlayerActivityServiceMock() {
+  return {
+    createActivity: vi.fn()
+  } as unknown as PlayerActivityService;
+}
+
 function createCombatRepositoryMock(): CombatRepository {
   return {
     applyAttack: vi.fn()
@@ -52,6 +59,7 @@ describe("CombatService", () => {
     const jailService = createJailServiceMock();
     const hospitalService = createHospitalServiceMock();
     const inventoryService = createInventoryServiceMock();
+    const playerActivityService = createPlayerActivityServiceMock();
     const domainEventsService = createDomainEventsServiceMock();
     const repository = createCombatRepositoryMock();
 
@@ -128,6 +136,7 @@ describe("CombatService", () => {
       jailService,
       hospitalService,
       inventoryService,
+      playerActivityService,
       domainEventsService,
       repository
     );
@@ -158,6 +167,7 @@ describe("CombatService", () => {
       createJailServiceMock(),
       createHospitalServiceMock(),
       createInventoryServiceMock(),
+      createPlayerActivityServiceMock(),
       createDomainEventsServiceMock(),
       createCombatRepositoryMock()
     );
@@ -209,6 +219,7 @@ describe("CombatService", () => {
       } as unknown as JailService,
       createHospitalServiceMock(),
       createInventoryServiceMock(),
+      createPlayerActivityServiceMock(),
       createDomainEventsServiceMock(),
       createCombatRepositoryMock()
     );
@@ -274,6 +285,7 @@ describe("CombatService", () => {
       jailService,
       hospitalService,
       createInventoryServiceMock(),
+      createPlayerActivityServiceMock(),
       createDomainEventsServiceMock(),
       createCombatRepositoryMock()
     );
@@ -290,6 +302,7 @@ describe("CombatService", () => {
     const jailService = createJailServiceMock();
     const hospitalService = createHospitalServiceMock();
     const inventoryService = createInventoryServiceMock();
+    const playerActivityService = createPlayerActivityServiceMock();
     const domainEventsService = createDomainEventsServiceMock();
     const repository = createCombatRepositoryMock();
 
@@ -353,6 +366,7 @@ describe("CombatService", () => {
       jailService,
       hospitalService,
       inventoryService,
+      playerActivityService,
       domainEventsService,
       repository
     );

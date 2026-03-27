@@ -5,6 +5,7 @@ import { AdminToolsModule } from "./modules/admin-tools/admin-tools.module";
 import { AchievementsModule } from "./modules/achievements/achievements.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { CombatModule } from "./modules/combat/combat.module";
+import { CustodyModule } from "./modules/custody/custody.module";
 import { DatabaseModule } from "./platform/database/database.module";
 import { DomainEventsModule } from "./platform/domain-events/domain-events.module";
 import { CrimeModule } from "./modules/crime/crime.module";
@@ -35,6 +36,7 @@ import { HealthModule } from "./platform/health/health.module";
     HealthModule,
     AuthModule,
     PlayerModule,
+    CustodyModule,
     AchievementsModule,
     AdminToolsModule,
     JailModule,

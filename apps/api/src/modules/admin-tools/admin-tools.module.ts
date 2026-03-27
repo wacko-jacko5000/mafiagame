@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 
 import { AuthModule } from "../auth/auth.module";
 import { CrimeModule } from "../crime/crime.module";
+import { CustodyModule } from "../custody/custody.module";
 import { InventoryModule } from "../inventory/inventory.module";
 import { TerritoryModule } from "../territory/territory.module";
 import { ADMIN_BALANCE_AUDIT_REPOSITORY } from "./application/admin-balance-audit.repository";
@@ -18,7 +19,7 @@ import { PrismaAdminBalanceAuditRepository } from "./infrastructure/prisma-admin
 import { PrismaStickyMenuRepository } from "./infrastructure/prisma-sticky-menu.repository";
 
 @Module({
-  imports: [AuthModule, CrimeModule, TerritoryModule, InventoryModule],
+  imports: [AuthModule, CrimeModule, TerritoryModule, InventoryModule, CustodyModule],
   controllers: [AdminBalanceController, StickyMenuController, AdminStickyMenuController],
   providers: [
     AdminBalanceService,

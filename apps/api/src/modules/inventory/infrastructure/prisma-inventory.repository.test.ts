@@ -77,15 +77,20 @@ describe("PrismaInventoryRepository", () => {
         type: "weapon",
         category: "handguns",
         price: 400,
+        delivery: "inventory",
         equipSlot: "weapon",
         unlockLevel: 1,
         weaponStats: { damageBonus: 4 },
-        armorStats: null
+        armorStats: null,
+        consumableEffects: null
       }
     });
 
     expect(result).toEqual({
+      delivery: "inventory",
       playerCashAfterPurchase: 2100,
+      playerEnergyAfterPurchase: null,
+      playerHealthAfterPurchase: null,
       ownedItem: {
         id: "owned-1",
         playerId: "player-1",
@@ -103,7 +108,8 @@ describe("PrismaInventoryRepository", () => {
         },
         armorStats: null,
         acquiredAt: now
-      }
+      },
+      consumedItem: null
     });
   });
 
@@ -133,10 +139,12 @@ describe("PrismaInventoryRepository", () => {
           type: "weapon",
           category: "handguns",
           price: 1800,
+          delivery: "inventory",
           equipSlot: "weapon",
           unlockLevel: 1,
           weaponStats: { damageBonus: 8 },
-          armorStats: null
+          armorStats: null,
+          consumableEffects: null
         }
       })
     ).rejects.toBeInstanceOf(InsufficientCashForItemError);

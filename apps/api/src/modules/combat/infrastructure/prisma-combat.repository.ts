@@ -12,6 +12,7 @@ interface CombatPlayerRecord {
   id: string;
   health: number;
   hospitalizedUntil: Date | null;
+  hospitalEntryCount: number;
 }
 
 interface CombatPrismaTransaction {
@@ -19,7 +20,12 @@ interface CombatPrismaTransaction {
     findUnique(args: { where: { id: string } }): Promise<CombatPlayerRecord | null>;
     update(args: {
       where: { id: string };
-      data: { health: number; hospitalizedUntil?: Date | null };
+      data: {
+        health: number;
+        hospitalizedUntil?: Date | null;
+        hospitalReason?: string | null;
+        hospitalEntryCount?: { increment: number };
+      };
     }): Promise<CombatPlayerRecord>;
   };
 }
@@ -63,7 +69,15 @@ export class PrismaCombatRepository implements CombatRepository {
         },
         data: {
           health: targetHealthAfter,
-          hospitalizedUntil
+          hospitalizedUntil,
+          ...(targetHospitalized
+            ? {
+                hospitalReason: command.hospitalReason,
+                hospitalEntryCount: {
+                  increment: 1
+                }
+              }
+            : {})
         }
       });
 

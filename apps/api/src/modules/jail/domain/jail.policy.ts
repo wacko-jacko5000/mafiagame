@@ -17,7 +17,8 @@ export function getJailStatus(
       playerId,
       active: false,
       until: null,
-      remainingSeconds: 0
+      remainingSeconds: 0,
+      reason: null
     };
   }
 
@@ -25,6 +26,7 @@ export function getJailStatus(
     playerId,
     active: true,
     until: jailedUntil,
-    remainingSeconds: Math.ceil((jailedUntil.getTime() - now.getTime()) / 1000)
+    remainingSeconds: Math.ceil((jailedUntil.getTime() - now.getTime()) / 1000),
+    reason: null
   };
 }
