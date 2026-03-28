@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import type { CrimeDefinition, CrimeExecutionResult } from "../lib/api-types";
 import { ApiError } from "../lib/api-client";
 import {
-  formatDateTime,
   formatMoney,
   formatPercent,
   formatRelativeDuration
@@ -65,7 +64,7 @@ export function CrimesPage() {
       const outcome = await gameApi.crimes.execute(accessToken, crimeId);
       await refreshPlayer();
 
-      setResult(outcome);
+      setResult(outcome.success ? outcome : null);
     } catch (nextError) {
       try {
         await refreshPlayer();
@@ -88,85 +87,39 @@ export function CrimesPage() {
       title="Crimes"
       subtitle="List starter crimes and execute them through the authenticated actor route."
     >
-      <section className="dashboard-grid">
-        <article className="panel">
-          <p className="eyebrow">Current state</p>
-          <h2>Resources before the next move</h2>
-          <dl className="stats-grid compact">
-            <div>
-              <dt>Cash</dt>
-              <dd>{player ? formatMoney(player.cash) : "..."}</dd>
-            </div>
-            <div>
-              <dt>Rank</dt>
-              <dd>{player ? `Level ${player.level} - ${player.rank}` : "..."}</dd>
-            </div>
-            <div>
-              <dt>Respect</dt>
-              <dd>{player?.currentRespect ?? "..."}</dd>
-            </div>
-            <div>
-              <dt>Progress</dt>
-              <dd>
-                {player
-                  ? player.nextLevel
-                    ? `${player.respectToNextLevel} to level ${player.nextLevel}`
-                    : "Max level"
-                  : "..."}
-              </dd>
-            </div>
-            <div>
-              <dt>Energy</dt>
-              <dd>{player?.energy ?? "..."}</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>
-                {player?.jailedUntil
-                  ? `Jailed until ${formatDateTime(player.jailedUntil)}`
-                  : player?.hospitalizedUntil
-                    ? `Hospitalized until ${formatDateTime(player.hospitalizedUntil)}`
-                    : "Ready"}
-              </dd>
-            </div>
-          </dl>
-        </article>
-
-        <article className="panel">
-          <p className="eyebrow">Last attempt</p>
-          <h2>Outcome</h2>
-          {result ? (
+      {result ? (
+        <div
+          aria-label="Dismiss crime outcome"
+          className="custody-overlay"
+          onClick={() => setResult(null)}
+        >
+          <span className="custody-overlay-backdrop" />
+          <section
+            className="panel stack custody-overlay-card crime-success-panel crime-success-overlay-card"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="eyebrow">Outcome</p>
+            <h2>SUCCESS</h2>
             <dl className="stats-grid compact">
               <div>
                 <dt>Crime</dt>
                 <dd>{result.crimeId}</dd>
               </div>
               <div>
-                <dt>Result</dt>
-                <dd>{result.success ? "Success" : "Failed"}</dd>
-              </div>
-              <div>
-                <dt>Cash</dt>
+                <dt>Cash won</dt>
                 <dd>{formatMoney(result.cashAwarded)}</dd>
               </div>
               <div>
-                <dt>Respect</dt>
+                <dt>Respect gained</dt>
                 <dd>{result.respectAwarded}</dd>
               </div>
-              <div>
-                <dt>Consequence</dt>
-                <dd>
-                  {result.consequence.type === "none"
-                    ? "None"
-                    : `${result.consequence.type} until ${formatDateTime(result.consequence.activeUntil)}`}
-                </dd>
-              </div>
             </dl>
-          ) : (
-            <p className="muted">Execute a crime to see the latest backend outcome.</p>
-          )}
-        </article>
-      </section>
+            <button className="button" type="button" onClick={() => setResult(null)}>
+              Continue
+            </button>
+          </section>
+        </div>
+      ) : null}
 
       {error ? <p className="notice notice-error">{error}</p> : null}
 

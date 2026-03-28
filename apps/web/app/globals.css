@@ -529,6 +529,24 @@ dd {
   justify-self: start;
 }
 
+.crime-success-panel {
+  border-color: rgba(241, 195, 125, 0.4);
+  background:
+    radial-gradient(circle at top right, rgba(241, 195, 125, 0.14), transparent 32%),
+    rgba(25, 19, 16, 0.92);
+}
+
+.crime-success-panel h2 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: 0.04em;
+  color: var(--accent-strong);
+}
+
+.crime-success-overlay-card {
+  width: min(560px, 100%);
+  text-align: left;
+}
+
 .custody-overlay {
   position: fixed;
   inset: 0;
