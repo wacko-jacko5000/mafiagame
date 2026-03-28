@@ -25,6 +25,8 @@ export function toShopItemResponseBody(
     equipSlot: item.equipSlot,
     unlockLevel: item.unlockLevel,
     unlockRank: item.unlockRank,
+    respectBonus: item.respectBonus,
+    parkingSlots: item.parkingSlots,
     weaponStats: item.weaponStats,
     armorStats: item.armorStats,
     consumableEffects: item.consumableEffects ? [...item.consumableEffects] : null
@@ -54,6 +56,8 @@ export function toPlayerInventoryItemResponseBody(
     price: item.price,
     equipSlot: item.equipSlot,
     unlockLevel: item.unlockLevel,
+    respectBonus: item.respectBonus,
+    parkingSlots: item.parkingSlots,
     equippedSlot: item.equippedSlot,
     marketListingId: item.marketListingId,
     weaponStats: item.weaponStats,

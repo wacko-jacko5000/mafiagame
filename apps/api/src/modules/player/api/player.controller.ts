@@ -12,6 +12,7 @@ import {
 import { CurrentActor } from "../../auth/api/current-actor.decorator";
 import { OptionalAuthGuard } from "../../auth/api/auth.guard";
 import type { AuthActor } from "../../auth/domain/auth.types";
+import { InventoryService } from "../../inventory/application/inventory.service";
 import { PlayerService } from "../application/player.service";
 import type {
   CreatePlayerRequestBody,
@@ -27,7 +28,9 @@ import {
 export class PlayerController {
   constructor(
     @Inject(PlayerService)
-    private readonly playerService: PlayerService
+    private readonly playerService: PlayerService,
+    @Inject(InventoryService)
+    private readonly inventoryService: InventoryService
   ) {}
 
   @Post()
@@ -40,7 +43,12 @@ export class PlayerController {
       body,
       actor?.accountId
     );
-    return toPlayerResponseBody(player);
+    return toPlayerResponseBody(player, {
+      respectBonus: 0,
+      parkingSlots: 0,
+      ownedVehicleCount: 0,
+      availableVehicleSlots: 0
+    });
   }
 
   @Get(":id")
@@ -48,7 +56,10 @@ export class PlayerController {
     @Param("id", ParseUUIDPipe) playerId: string
   ): Promise<PlayerResponseBody> {
     const player = await this.playerService.getPlayerById(playerId);
-    return toPlayerResponseBody(player);
+    return toPlayerResponseBody(
+      player,
+      await this.inventoryService.getPlayerAssetBonuses(playerId)
+    );
   }
 
   @Get(":id/resources")
@@ -56,6 +67,13 @@ export class PlayerController {
     @Param("id", ParseUUIDPipe) playerId: string
   ): Promise<PlayerResourcesResponseBody> {
     const resources = await this.playerService.getPlayerResources(playerId);
-    return toPlayerResourcesResponseBody(resources);
+    const bonuses = await this.inventoryService.getPlayerAssetBonuses(playerId);
+    return toPlayerResourcesResponseBody({
+      cash: resources.cash,
+      baseRespect: resources.respect,
+      assetRespectBonus: bonuses.respectBonus,
+      energy: resources.energy,
+      health: resources.health
+    });
   }
 }

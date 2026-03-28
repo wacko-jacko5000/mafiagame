@@ -178,11 +178,11 @@ export function CrimesPage() {
         ) : visibleCrimes.length === 0 ? (
           <p className="muted">No crimes are unlocked at your current level yet.</p>
         ) : (
-          <div className="card-grid">
+          <div className="card-grid crime-card-grid">
             {visibleCrimes.map((crime) => (
-              <article key={crime.id} className="subpanel">
+              <article key={crime.id} className="subpanel crime-card">
                 <h3>{crime.name}</h3>
-                <dl className="stats-grid compact">
+                <dl className="stats-grid compact crime-stats-grid">
                   <div>
                     <dt>Energy cost</dt>
                     <dd>{crime.energyCost}</dd>
@@ -213,7 +213,7 @@ export function CrimesPage() {
                   </div>
                 </dl>
                 <button
-                  className="button"
+                  className="button crime-card-button"
                   disabled={activeCrimeId === crime.id}
                   type="button"
                   onClick={() => void handleExecute(crime.id)}

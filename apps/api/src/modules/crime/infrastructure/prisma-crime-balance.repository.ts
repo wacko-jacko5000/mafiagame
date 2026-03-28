@@ -43,6 +43,9 @@ export class PrismaCrimeBalanceRepository implements CrimeBalanceRepository {
       },
       create: balance,
       update: {
+        name: balance.name,
+        unlockLevel: balance.unlockLevel,
+        difficulty: balance.difficulty,
         energyCost: balance.energyCost,
         successRate: balance.successRate,
         cashRewardMin: balance.cashRewardMin,

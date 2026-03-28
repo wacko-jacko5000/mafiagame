@@ -4,7 +4,7 @@ import type {
   CrimeFailureConsequence
 } from "./crime.types";
 
-interface CrimeCatalogRow {
+export interface CrimeCatalogRow {
   id: string;
   name: string;
   unlockLevel: number;
@@ -14,7 +14,7 @@ interface CrimeCatalogRow {
   respectReward: number;
 }
 
-function buildCrimeDefinition(row: CrimeCatalogRow): CrimeDefinition {
+export function buildCrimeDefinition(row: CrimeCatalogRow): CrimeDefinition {
   const defaultsByDifficulty: Record<
     CrimeDifficulty,
     Pick<CrimeDefinition, "energyCost" | "successRate" | "failureConsequence">

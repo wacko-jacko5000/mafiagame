@@ -5,18 +5,22 @@ export type ShopItemCategoryResponseBody =
   | "sniper"
   | "special"
   | "armor"
-  | "drugs";
+  | "drugs"
+  | "garage"
+  | "realestate";
 
 export interface ShopItemResponseBody {
   id: string;
   name: string;
-  type: "weapon" | "armor" | "consumable";
+  type: "weapon" | "armor" | "consumable" | "vehicle" | "property";
   category: ShopItemCategoryResponseBody;
   price: number;
   delivery: "inventory" | "instant";
   equipSlot: "weapon" | "armor" | null;
   unlockLevel: number;
   unlockRank: string;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
   weaponStats: {
     damageBonus: number;
   } | null;
@@ -40,11 +44,13 @@ export interface PlayerInventoryItemResponseBody {
   playerId: string;
   itemId: string;
   name: string;
-  type: "weapon" | "armor";
+  type: "weapon" | "armor" | "vehicle" | "property";
   category: Exclude<ShopItemCategoryResponseBody, "drugs">;
   price: number;
-  equipSlot: "weapon" | "armor";
+  equipSlot: "weapon" | "armor" | null;
   unlockLevel: number;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
   equippedSlot: "weapon" | "armor" | null;
   marketListingId: string | null;
   weaponStats: {

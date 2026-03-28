@@ -2,8 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
 import { PlayerService } from "../../player/application/player.service";
+import {
+  getEquipmentItemById,
+  getShopItemById,
+  starterShopItemCatalog
+} from "../domain/inventory.catalog";
 import { InsufficientCashForItemError } from "../domain/inventory.errors";
 import type { InventoryRepository } from "./inventory.repository";
+import { InventoryBalanceService } from "./inventory-balance.service";
 import { InventoryService } from "./inventory.service";
 
 function createPlayerServiceMock() {
@@ -32,10 +38,18 @@ function createInventoryRepositoryMock(): InventoryRepository {
   return {
     findPlayerItemById: vi.fn(),
     equipItem: vi.fn(),
-    listPlayerItems: vi.fn(),
+    listPlayerItems: vi.fn().mockResolvedValue([]),
     purchaseItem: vi.fn(),
     unequipSlot: vi.fn()
   };
+}
+
+function createInventoryBalanceServiceMock() {
+  return {
+    listShopItemBalances: vi.fn(() => starterShopItemCatalog),
+    findShopItemById: vi.fn((itemId: string) => getShopItemById(itemId) ?? null),
+    findEquipmentItemById: vi.fn((itemId: string) => getEquipmentItemById(itemId) ?? null)
+  } as unknown as InventoryBalanceService;
 }
 
 describe("InventoryService", () => {
@@ -44,6 +58,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       createInventoryRepositoryMock()
     );
 
@@ -88,6 +103,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       createInventoryRepositoryMock()
     );
 
@@ -137,6 +153,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
     const result = await service.listPlayerInventory(playerId);
@@ -189,7 +206,12 @@ describe("InventoryService", () => {
     });
 
     const domainEventsService = createDomainEventsServiceMock();
-    const service = new InventoryService(playerService, domainEventsService, repository);
+    const service = new InventoryService(
+      playerService,
+      domainEventsService,
+      createInventoryBalanceServiceMock(),
+      repository
+    );
     const result = await service.purchaseItem(playerId, "rusty-knife");
 
     expect(repository.purchaseItem).toHaveBeenCalledWith({
@@ -254,6 +276,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
 
@@ -297,6 +320,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
 
@@ -310,6 +334,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       createPlayerServiceMock(),
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       createInventoryRepositoryMock()
     );
 
@@ -352,6 +377,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
     const result = await service.getEquippedItems(playerId);
@@ -412,6 +438,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
     const result = await service.equipItem(playerId, inventoryItemId, "weapon");
@@ -466,6 +493,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
 
@@ -507,6 +535,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
 
@@ -560,6 +589,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
 
@@ -601,6 +631,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
     const result = await service.unequipSlot(playerId, "weapon");
@@ -630,6 +661,7 @@ describe("InventoryService", () => {
     const service = new InventoryService(
       playerService,
       createDomainEventsServiceMock(),
+      createInventoryBalanceServiceMock(),
       repository
     );
 

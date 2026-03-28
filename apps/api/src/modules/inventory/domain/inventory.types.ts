@@ -1,6 +1,7 @@
 export type EquipmentSlot = "weapon" | "armor";
 export type EquipmentItemType = "weapon" | "armor";
-export type ShopItemType = EquipmentItemType | "consumable";
+export type OwnedShopItemType = EquipmentItemType | "vehicle" | "property";
+export type ShopItemType = OwnedShopItemType | "consumable";
 export type EquipmentShopItemCategory =
   | "handguns"
   | "smg"
@@ -8,7 +9,11 @@ export type EquipmentShopItemCategory =
   | "sniper"
   | "special"
   | "armor";
-export type ShopItemCategory = EquipmentShopItemCategory | "drugs";
+export type OwnedShopItemCategory =
+  | EquipmentShopItemCategory
+  | "garage"
+  | "realestate";
+export type ShopItemCategory = OwnedShopItemCategory | "drugs";
 export type ConsumableEffectResource = "energy" | "health";
 
 export interface WeaponItemStats {
@@ -32,6 +37,8 @@ interface BaseShopItemDefinition {
   name: string;
   price: number;
   unlockLevel: number;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
 }
 
 export interface ItemDefinition extends BaseShopItemDefinition {
@@ -49,6 +56,26 @@ export interface EquipmentItemDefinition extends ItemDefinition {
   consumableEffects: null;
 }
 
+export interface VehicleItemDefinition extends BaseShopItemDefinition {
+  type: "vehicle";
+  category: "garage";
+  delivery: "inventory";
+  equipSlot: null;
+  weaponStats: null;
+  armorStats: null;
+  consumableEffects: null;
+}
+
+export interface PropertyItemDefinition extends BaseShopItemDefinition {
+  type: "property";
+  category: "realestate";
+  delivery: "inventory";
+  equipSlot: null;
+  weaponStats: null;
+  armorStats: null;
+  consumableEffects: null;
+}
+
 export interface ConsumableItemDefinition extends BaseShopItemDefinition {
   type: "consumable";
   category: "drugs";
@@ -59,7 +86,11 @@ export interface ConsumableItemDefinition extends BaseShopItemDefinition {
   consumableEffects: readonly ConsumableEffect[];
 }
 
-export type ShopItemDefinition = EquipmentItemDefinition | ConsumableItemDefinition;
+export type OwnedShopItemDefinition =
+  | EquipmentItemDefinition
+  | VehicleItemDefinition
+  | PropertyItemDefinition;
+export type ShopItemDefinition = OwnedShopItemDefinition | ConsumableItemDefinition;
 export type ItemType = EquipmentItemType;
 
 export interface PlayerInventoryItemSnapshot {
@@ -78,11 +109,13 @@ export interface InventoryListItem {
   playerId: string;
   itemId: string;
   name: string;
-  type: EquipmentItemType;
-  category: EquipmentShopItemCategory;
+  type: OwnedShopItemType;
+  category: OwnedShopItemCategory;
   price: number;
-  equipSlot: EquipmentSlot;
+  equipSlot: EquipmentSlot | null;
   unlockLevel: number;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
   equippedSlot: EquipmentSlot | null;
   marketListingId: string | null;
   weaponStats: WeaponItemStats | null;
@@ -92,7 +125,7 @@ export interface InventoryListItem {
 
 export interface PurchaseInventoryItemCommand {
   playerId: string;
-  item: EquipmentItemDefinition;
+  item: OwnedShopItemDefinition;
 }
 
 export interface ShopCatalogItem {
@@ -105,6 +138,8 @@ export interface ShopCatalogItem {
   equipSlot: EquipmentSlot | null;
   unlockLevel: number;
   unlockRank: string;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
   weaponStats: WeaponItemStats | null;
   armorStats: ArmorItemStats | null;
   consumableEffects: readonly ConsumableEffect[] | null;
@@ -115,7 +150,7 @@ export interface PlayerShopItem extends ShopCatalogItem {
   isLocked: boolean;
 }
 
-export interface PurchaseEquipmentItemResult {
+export interface PurchaseOwnedItemResult {
   delivery: "inventory";
   playerCashAfterPurchase: number;
   playerEnergyAfterPurchase: number | null;
@@ -134,8 +169,15 @@ export interface PurchaseConsumableItemResult {
 }
 
 export type PurchaseShopItemResult =
-  | PurchaseEquipmentItemResult
+  | PurchaseOwnedItemResult
   | PurchaseConsumableItemResult;
+
+export interface PlayerAssetBonuses {
+  respectBonus: number;
+  parkingSlots: number;
+  ownedVehicleCount: number;
+  availableVehicleSlots: number;
+}
 
 export interface EquipInventoryItemCommand {
   playerId: string;

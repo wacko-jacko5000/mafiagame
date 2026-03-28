@@ -85,7 +85,7 @@ export function InventoryPage() {
   return (
     <AppShell
       title="Inventory"
-      subtitle="Inspect owned items, manage equipped gear, and keep catalog browsing on the dedicated shop page."
+      subtitle="Inspect owned gear, vehicles, and properties, and manage equipped combat items."
     >
       {error ? <p className="notice notice-error">{error}</p> : null}
 
@@ -101,6 +101,10 @@ export function InventoryPage() {
             <div>
               <dt>Rank</dt>
               <dd>{player ? `Level ${player.level} - ${player.rank}` : "..."}</dd>
+            </div>
+            <div>
+              <dt>Garage</dt>
+              <dd>{player ? `${player.ownedVehicleCount}/${player.parkingSlots}` : "..."}</dd>
             </div>
             <div>
               <dt>Inventory items</dt>
@@ -146,7 +150,7 @@ export function InventoryPage() {
         <p className="eyebrow">Owned items</p>
         <h2>Inventory</h2>
         <p className="muted">
-          Need more gear? Visit the <Link href="/shop">shop</Link> for level-gated weapons and starter armor.
+          Need more gear or assets? Visit the <Link href="/shop">shop</Link> for level-gated items.
         </p>
         {isLoading ? (
           <p className="muted">Loading inventory...</p>
@@ -157,9 +161,17 @@ export function InventoryPage() {
                 <div>
                   <strong>{item.name}</strong>
                   <p className="muted">
-                    {item.category} / {item.equipSlot} / acquired {formatDateTime(item.acquiredAt)}
+                    {item.category}
+                    {item.equipSlot ? ` / ${item.equipSlot}` : ""}
+                    {" / "}acquired {formatDateTime(item.acquiredAt)}
                   </p>
                   <p className="meta">{describeInventoryItemStats(item)}</p>
+                  {item.respectBonus ? (
+                    <p className="meta">Respect bonus: +{item.respectBonus}</p>
+                  ) : null}
+                  {item.parkingSlots ? (
+                    <p className="meta">Parking slots: {item.parkingSlots}</p>
+                  ) : null}
                   <p className="meta">
                     {item.marketListingId
                       ? "Locked by market listing"
@@ -217,7 +229,7 @@ export function InventoryPage() {
             ))}
           </ul>
         ) : (
-          <p className="muted">No owned items yet. Buy your first weapon or armor from the shop.</p>
+          <p className="muted">No owned items yet. Buy your first weapon, vehicle, or property from the shop.</p>
         )}
       </section>
     </AppShell>

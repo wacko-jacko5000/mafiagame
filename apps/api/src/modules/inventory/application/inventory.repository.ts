@@ -2,7 +2,7 @@ import type {
   EquipInventoryItemCommand,
   PlayerInventoryItemSnapshot,
   PurchaseInventoryItemCommand,
-  PurchaseEquipmentItemResult
+  PurchaseOwnedItemResult
 } from "../domain/inventory.types";
 
 export const INVENTORY_REPOSITORY = Symbol("INVENTORY_REPOSITORY");
@@ -15,7 +15,7 @@ export interface InventoryRepository {
   ): Promise<PlayerInventoryItemSnapshot | null>;
   purchaseItem(
     command: PurchaseInventoryItemCommand
-  ): Promise<PurchaseEquipmentItemResult | null>;
+  ): Promise<PurchaseOwnedItemResult | null>;
   equipItem(command: EquipInventoryItemCommand): Promise<PlayerInventoryItemSnapshot | null>;
   unequipSlot(
     playerId: string,

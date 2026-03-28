@@ -23,6 +23,8 @@ export interface Player {
   id: string;
   displayName: string;
   cash: number;
+  baseRespect: number;
+  assetRespectBonus: number;
   level: number;
   rank: string;
   currentRespect: number;
@@ -34,6 +36,9 @@ export interface Player {
   progressPercent: number;
   energy: number;
   health: number;
+  parkingSlots: number;
+  ownedVehicleCount: number;
+  availableVehicleSlots: number;
   jailedUntil: string | null;
   hospitalizedUntil: string | null;
   createdAt: string;
@@ -98,18 +103,22 @@ export type ShopItemCategory =
   | "sniper"
   | "special"
   | "armor"
-  | "drugs";
+  | "drugs"
+  | "garage"
+  | "realestate";
 
 export interface ShopItem {
   id: string;
   name: string;
-  type: "weapon" | "armor" | "consumable";
+  type: "weapon" | "armor" | "consumable" | "vehicle" | "property";
   category: ShopItemCategory;
   price: number;
   delivery: "inventory" | "instant";
   equipSlot: EquipmentSlot | null;
   unlockLevel: number;
   unlockRank: string;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
   weaponStats: {
     damageBonus: number;
   } | null;
@@ -130,11 +139,13 @@ export interface InventoryItem {
   playerId: string;
   itemId: string;
   name: string;
-  type: "weapon" | "armor";
+  type: "weapon" | "armor" | "vehicle" | "property";
   category: ShopItemCategory;
   price: number;
-  equipSlot: EquipmentSlot;
+  equipSlot: EquipmentSlot | null;
   unlockLevel: number;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
   equippedSlot: EquipmentSlot | null;
   marketListingId: string | null;
   weaponStats: {
@@ -435,6 +446,8 @@ export interface AdminBalanceAuditEntry {
 export interface CrimeBalanceEntry {
   id: string;
   name: string;
+  unlockLevel: number;
+  difficulty: "easy" | "medium" | "hard" | "very_hard";
   energyCost: number;
   successRate: number;
   cashRewardMin: number;
@@ -457,6 +470,14 @@ export interface ShopItemBalanceEntry {
   delivery: "inventory" | "instant";
   price: number;
   equipSlot: string | null;
+  unlockLevel: number;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
+  damageBonus?: number | null;
+  damageReduction?: number | null;
+  effectResource?: "energy" | "health" | null;
+  effectAmount?: number | null;
+  isCustom?: boolean;
   consumableEffects: Array<{
     type: "resource";
     resource: "energy" | "health";

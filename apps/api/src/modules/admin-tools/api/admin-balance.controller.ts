@@ -5,6 +5,7 @@ import {
   Inject,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards
 } from "@nestjs/common";
@@ -65,5 +66,32 @@ export class AdminBalanceController {
     @CurrentActor() actor?: AuthActor
   ): Promise<AdminBalanceSectionResponseBody> {
     return this.adminBalanceService.updateSection(section, body, actor?.accountId ?? null);
+  }
+
+  @Post("crimes")
+  @UseGuards(OptionalAuthGuard)
+  async createCrime(
+    @Body() body: unknown,
+    @CurrentActor() actor?: AuthActor
+  ): Promise<AdminBalanceSectionResponseBody> {
+    return this.adminBalanceService.createCrime(body, actor?.accountId ?? null);
+  }
+
+  @Post("shop-items")
+  @UseGuards(OptionalAuthGuard)
+  async createShopItem(
+    @Body() body: unknown,
+    @CurrentActor() actor?: AuthActor
+  ): Promise<AdminBalanceSectionResponseBody> {
+    return this.adminBalanceService.createShopItem(body, actor?.accountId ?? null);
+  }
+
+  @Post("shop-items/:itemId/archive")
+  @UseGuards(OptionalAuthGuard)
+  async archiveShopItem(
+    @Param("itemId") itemId: string,
+    @CurrentActor() actor?: AuthActor
+  ): Promise<AdminBalanceSectionResponseBody> {
+    return this.adminBalanceService.archiveShopItem(itemId, actor?.accountId ?? null);
   }
 }

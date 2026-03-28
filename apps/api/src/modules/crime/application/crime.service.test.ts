@@ -4,6 +4,8 @@ import { HospitalService } from "../../hospital/application/hospital.service";
 import { JailService } from "../../jail/application/jail.service";
 import { PlayerService } from "../../player/application/player.service";
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
+import { getCrimeById, starterCrimeCatalog } from "../domain/crime.catalog";
+import { CrimeBalanceService } from "./crime-balance.service";
 import { CrimeService } from "./crime.service";
 
 function createPlayerServiceMock() {
@@ -34,6 +36,13 @@ function createDomainEventsServiceMock() {
   } as unknown as DomainEventsService;
 }
 
+function createCrimeBalanceServiceMock() {
+  return {
+    listCrimeBalances: vi.fn(() => starterCrimeCatalog),
+    findCrimeById: vi.fn((crimeId: string) => getCrimeById(crimeId) ?? null)
+  } as unknown as CrimeBalanceService;
+}
+
 describe("CrimeService", () => {
   it("lists the full crime progression catalog", () => {
     const service = new CrimeService(
@@ -41,6 +50,7 @@ describe("CrimeService", () => {
       createJailServiceMock(),
       createHospitalServiceMock(),
       createDomainEventsServiceMock(),
+      createCrimeBalanceServiceMock(),
       () => 0.5
     );
 
@@ -95,6 +105,7 @@ describe("CrimeService", () => {
       jailService,
       hospitalService,
       createDomainEventsServiceMock(),
+      createCrimeBalanceServiceMock(),
       () => 0.3
     );
     const result = await service.executeCrime(crypto.randomUUID(), "pickpocket");
@@ -147,6 +158,7 @@ describe("CrimeService", () => {
       jailService,
       hospitalService,
       createDomainEventsServiceMock(),
+      createCrimeBalanceServiceMock(),
       () => 0.3
     );
 
@@ -209,6 +221,7 @@ describe("CrimeService", () => {
       jailService,
       hospitalService,
       createDomainEventsServiceMock(),
+      createCrimeBalanceServiceMock(),
       () => 0.9
     );
     const result = await service.executeCrime(playerId, "shoplift-candy");
@@ -280,6 +293,7 @@ describe("CrimeService", () => {
       jailService,
       hospitalService,
       createDomainEventsServiceMock(),
+      createCrimeBalanceServiceMock(),
       () => 0.9
     );
     const result = await service.executeCrime(playerId, "mug-civilian");

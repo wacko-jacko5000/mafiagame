@@ -47,6 +47,19 @@ describe("InventoryBalanceService", () => {
     expect(result.find((item) => item.id === "rusty-knife")?.price).toBe(450);
     expect(repository.upsertShopItemBalance).toHaveBeenCalledWith({
       itemId: "rusty-knife",
+      name: null,
+      type: null,
+      category: null,
+      delivery: null,
+      equipSlot: null,
+      unlockLevel: null,
+      respectBonus: null,
+      parkingSlots: null,
+      damageBonus: null,
+      damageReduction: null,
+      resourceEffectResource: null,
+      resourceEffectAmount: null,
+      archived: null,
       price: 450
     });
   });

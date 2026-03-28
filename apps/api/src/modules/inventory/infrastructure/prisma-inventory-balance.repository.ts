@@ -12,7 +12,7 @@ interface PrismaInventoryBalanceClient {
     upsert(args: {
       where: { itemId: string };
       create: ShopItemBalanceRecord;
-      update: { price: number };
+      update: Omit<ShopItemBalanceRecord, "itemId">;
     }): Promise<ShopItemBalanceRecord>;
   };
 }
@@ -43,6 +43,19 @@ export class PrismaInventoryBalanceRepository implements InventoryBalanceReposit
       },
       create: balance,
       update: {
+        name: balance.name,
+        type: balance.type,
+        category: balance.category,
+        delivery: balance.delivery,
+        equipSlot: balance.equipSlot,
+        unlockLevel: balance.unlockLevel,
+        respectBonus: balance.respectBonus,
+        parkingSlots: balance.parkingSlots,
+        damageBonus: balance.damageBonus,
+        damageReduction: balance.damageReduction,
+        resourceEffectResource: balance.resourceEffectResource,
+        resourceEffectAmount: balance.resourceEffectAmount,
+        archived: balance.archived,
         price: balance.price
       }
     });

@@ -11,7 +11,6 @@ import { JailService } from "../../jail/application/jail.service";
 import { PlayerService } from "../../player/application/player.service";
 import { derivePlayerProgression } from "../../player/domain/player.policy";
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
-import { getCrimeById, starterCrimeCatalog } from "../domain/crime.catalog";
 import {
   CrimeLevelLockedError,
   CrimeNotFoundError,
@@ -22,6 +21,7 @@ import {
 import { resolveCrimeOutcome } from "../domain/crime.policy";
 import type { CrimeDefinition, CrimeOutcome } from "../domain/crime.types";
 import { CRIME_RANDOM_PROVIDER } from "./crime.constants";
+import { CrimeBalanceService } from "./crime-balance.service";
 
 @Injectable()
 export class CrimeService {
@@ -34,16 +34,18 @@ export class CrimeService {
     private readonly hospitalService: HospitalService,
     @Inject(DomainEventsService)
     private readonly domainEventsService: DomainEventsService,
+    @Inject(CrimeBalanceService)
+    private readonly crimeBalanceService: CrimeBalanceService,
     @Inject(CRIME_RANDOM_PROVIDER)
     private readonly getRandomRoll: () => number
   ) {}
 
   listCrimes(): readonly CrimeDefinition[] {
-    return starterCrimeCatalog;
+    return this.crimeBalanceService.listCrimeBalances();
   }
 
   async executeCrime(playerId: string, crimeId: string): Promise<CrimeOutcome> {
-    const crime = getCrimeById(crimeId);
+    const crime = this.crimeBalanceService.findCrimeById(crimeId);
     const now = new Date();
 
     if (!crime) {

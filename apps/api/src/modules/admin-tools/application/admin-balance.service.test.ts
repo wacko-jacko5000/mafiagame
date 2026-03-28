@@ -59,6 +59,8 @@ describe("AdminBalanceService", () => {
           {
             id: "pickpocket",
             name: "Pickpocket",
+            unlockLevel: 1,
+            difficulty: "easy",
             energyCost: 10,
             successRate: 0.75,
             minReward: 120,
@@ -157,6 +159,8 @@ describe("AdminBalanceService", () => {
           {
             id: "pickpocket",
             name: "Pickpocket",
+            unlockLevel: 1,
+            difficulty: "easy",
             energyCost: 10,
             successRate: 0.75,
             minReward: 120,
@@ -171,6 +175,8 @@ describe("AdminBalanceService", () => {
           {
             id: "pickpocket",
             name: "Pickpocket",
+            unlockLevel: 1,
+            difficulty: "easy",
             energyCost: 12,
             successRate: 0.7,
             minReward: 150,
@@ -219,6 +225,8 @@ describe("AdminBalanceService", () => {
         previousValue: {
           id: "pickpocket",
           name: "Pickpocket",
+          unlockLevel: 1,
+          difficulty: "easy",
           energyCost: 10,
           successRate: 0.75,
           cashRewardMin: 120,
@@ -228,11 +236,150 @@ describe("AdminBalanceService", () => {
         newValue: {
           id: "pickpocket",
           name: "Pickpocket",
+          unlockLevel: 1,
+          difficulty: "easy",
           energyCost: 12,
           successRate: 0.7,
           cashRewardMin: 150,
           cashRewardMax: 240,
           respectReward: 2
+        }
+      }
+    ]);
+  });
+
+  it("creates a custom crime and records the creation in the audit log", async () => {
+    const auditRepository = {
+      createEntries: vi.fn(),
+      listEntries: vi.fn()
+    } satisfies AdminBalanceAuditRepository;
+    const crimeBalanceService = {
+      listCrimeBalances: vi
+        .fn()
+        .mockReturnValueOnce([
+          {
+            id: "pickpocket",
+            name: "Pickpocket",
+            unlockLevel: 1,
+            difficulty: "easy",
+            energyCost: 10,
+            successRate: 0.75,
+            minReward: 120,
+            maxReward: 220,
+            respectReward: 1,
+            failureConsequence: {
+              type: "none"
+            }
+          },
+          {
+            id: "warehouse-tipoff",
+            name: "Warehouse Tipoff",
+            unlockLevel: 6,
+            difficulty: "hard",
+            energyCost: 18,
+            successRate: 0.5,
+            minReward: 1800,
+            maxReward: 2600,
+            respectReward: 14,
+            failureConsequence: {
+              type: "jail",
+              durationMinutes: 25
+            }
+          }
+        ]),
+      createCrime: vi.fn().mockResolvedValue({
+        id: "warehouse-tipoff",
+        name: "Warehouse Tipoff",
+        unlockLevel: 6,
+        difficulty: "hard",
+        energyCost: 18,
+        successRate: 0.5,
+        minReward: 1800,
+        maxReward: 2600,
+        respectReward: 14,
+        failureConsequence: {
+          type: "jail",
+          durationMinutes: 25
+        }
+      })
+    } as unknown as CrimeBalanceService;
+
+    const service = new AdminBalanceService(
+      auditRepository,
+      crimeBalanceService,
+      {
+        listDistrictBalances: vi.fn(),
+        updateDistrictBalances: vi.fn()
+      } as unknown as TerritoryBalanceService,
+      {
+        listShopItemBalances: vi.fn(),
+        updateShopItemBalances: vi.fn()
+      } as unknown as InventoryBalanceService,
+      createCustodyBalanceServiceMock()
+    );
+
+    const result = await service.createCrime(
+      {
+        id: "warehouse-tipoff",
+        name: "Warehouse Tipoff",
+        unlockLevel: 6,
+        difficulty: "hard",
+        cashRewardMin: 1800,
+        cashRewardMax: 2600,
+        respectReward: 14
+      },
+      "account-7"
+    );
+
+    expect(vi.mocked(crimeBalanceService.createCrime)).toHaveBeenCalledWith({
+      id: "warehouse-tipoff",
+      name: "Warehouse Tipoff",
+      unlockLevel: 6,
+      difficulty: "hard",
+      cashRewardMin: 1800,
+      cashRewardMax: 2600,
+      respectReward: 14
+    });
+    expect(result).toMatchObject({
+      section: "crimes",
+      entries: expect.arrayContaining([
+        expect.objectContaining({
+          id: "warehouse-tipoff",
+          name: "Warehouse Tipoff",
+          unlockLevel: 6,
+          difficulty: "hard",
+          cashRewardMin: 1800,
+          cashRewardMax: 2600,
+          respectReward: 14
+        })
+      ])
+    });
+    expect(auditRepository.createEntries).toHaveBeenCalledWith([
+      {
+        section: "crimes",
+        targetId: "warehouse-tipoff",
+        changedByAccountId: "account-7",
+        previousValue: {
+          id: "warehouse-tipoff",
+          name: null,
+          unlockLevel: null,
+          difficulty: null,
+          energyCost: null,
+          successRate: null,
+          cashRewardMin: null,
+          cashRewardMax: null,
+          respectReward: null
+        },
+        newValue: {
+          id: "warehouse-tipoff",
+          name: "Warehouse Tipoff",
+          unlockLevel: 6,
+          difficulty: "hard",
+          energyCost: 18,
+          successRate: 0.5,
+          cashRewardMin: 1800,
+          cashRewardMax: 2600,
+          respectReward: 14
         }
       }
     ]);

@@ -6,6 +6,8 @@ export interface PlayerResponseBody {
   id: string;
   displayName: string;
   cash: number;
+  baseRespect: number;
+  assetRespectBonus: number;
   level: number;
   rank: string;
   currentRespect: number;
@@ -17,6 +19,9 @@ export interface PlayerResponseBody {
   progressPercent: number;
   energy: number;
   health: number;
+  parkingSlots: number;
+  ownedVehicleCount: number;
+  availableVehicleSlots: number;
   jailedUntil: string | null;
   hospitalizedUntil: string | null;
   createdAt: string;
@@ -26,6 +31,8 @@ export interface PlayerResponseBody {
 export interface PlayerResourcesResponseBody {
   cash: number;
   respect: number;
+  baseRespect: number;
+  assetRespectBonus: number;
   energy: number;
   health: number;
 }

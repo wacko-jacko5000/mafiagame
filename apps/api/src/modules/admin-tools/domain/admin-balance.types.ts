@@ -15,6 +15,8 @@ export interface AdminBalanceAuditEntry {
 export interface CrimeBalanceEntry {
   id: string;
   name: string;
+  unlockLevel: number;
+  difficulty: "easy" | "medium" | "hard" | "very_hard";
   energyCost: number;
   successRate: number;
   cashRewardMin: number;
@@ -37,6 +39,14 @@ export interface ShopItemBalanceEntry {
   delivery: "inventory" | "instant";
   price: number;
   equipSlot: string | null;
+  unlockLevel: number;
+  respectBonus?: number | null;
+  parkingSlots?: number | null;
+  damageBonus?: number | null;
+  damageReduction?: number | null;
+  effectResource?: "energy" | "health" | null;
+  effectAmount?: number | null;
+  isCustom?: boolean;
   consumableEffects: Array<{
     type: "resource";
     resource: "energy" | "health";
@@ -81,7 +91,7 @@ export type AdminBalanceSectionView =
     }
   | {
       section: "shop-items";
-      label: "Starter Shop Items";
+      label: "Shop Catalog";
       editableFields: readonly ["price"];
       entries: ShopItemBalanceEntry[];
     }

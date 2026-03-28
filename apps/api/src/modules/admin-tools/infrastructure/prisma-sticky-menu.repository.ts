@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../../../platform/database/prisma.service";
 import {
@@ -65,7 +65,10 @@ function toStickyMenuConfigRecord(row: StickyMenuConfigRow): StickyMenuConfigRec
 
 @Injectable()
 export class PrismaStickyMenuRepository implements StickyMenuRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    @Inject(PrismaService)
+    private readonly prismaService: PrismaService
+  ) {}
 
   async getConfig(): Promise<StickyMenuConfigRecord | null> {
     const prismaClient = this.prismaService as unknown as StickyMenuPrismaClient;

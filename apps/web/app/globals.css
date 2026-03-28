@@ -370,6 +370,68 @@ dd {
   align-items: end;
 }
 
+.admin-section-nav {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.admin-section-button,
+.admin-overview-card {
+  text-align: left;
+  font: inherit;
+  color: var(--text-main);
+}
+
+.admin-section-button {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.admin-section-button:hover,
+.admin-section-button.is-active,
+.admin-overview-card:hover {
+  border-color: rgba(215, 162, 96, 0.45);
+  background: rgba(215, 162, 96, 0.1);
+  transform: translateY(-1px);
+}
+
+.admin-section-button-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.admin-section-button-copy {
+  color: var(--text-muted);
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.admin-overview-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.admin-overview-card {
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.admin-workspace {
+  display: grid;
+  gap: 20px;
+}
+
 .admin-entry-list {
   display: grid;
   gap: 16px;
@@ -442,6 +504,27 @@ dd {
   gap: 20px;
 }
 
+.crime-card-grid {
+  align-items: start;
+}
+
+.crime-card {
+  display: grid;
+  gap: 14px;
+}
+
+.crime-card h3 {
+  margin-bottom: 0;
+}
+
+.crime-stats-grid {
+  margin-top: 0;
+}
+
+.crime-card-button {
+  justify-self: start;
+}
+
 .custody-overlay {
   position: fixed;
   inset: 0;
@@ -503,14 +586,14 @@ dd {
 
   .mobile-game-header {
     display: grid;
-    gap: 14px;
+    gap: 10px;
     position: sticky;
     top: 0;
     z-index: 20;
-    padding: 16px 18px 14px;
+    padding: 10px 14px 12px;
     margin-bottom: 4px;
     border: 1px solid var(--panel-border);
-    border-radius: 0 0 24px 24px;
+    border-radius: 0 0 20px 20px;
     background: rgba(20, 15, 13, 0.94);
     backdrop-filter: blur(16px);
     box-shadow: var(--shadow);
@@ -518,42 +601,43 @@ dd {
 
   .mobile-game-header-row {
     display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: 12px;
+    align-items: center;
+    justify-content: flex-start;
   }
 
   .mobile-game-header h2 {
     margin-bottom: 0;
-  }
-
-  .mobile-logout-button {
-    padding: 10px 14px;
+    font-size: 1.9rem;
   }
 
   .mobile-resource-strip {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(110px, 1fr);
-    gap: 10px;
+    grid-auto-columns: minmax(92px, 1fr);
+    gap: 8px;
     overflow-x: auto;
     padding-bottom: 2px;
   }
 
   .mobile-resource-pill {
     display: grid;
-    gap: 4px;
-    padding: 10px 12px;
-    border-radius: 16px;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
   }
 
   .mobile-resource-pill span {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+  }
+
+  .mobile-resource-pill strong {
+    font-size: 0.95rem;
+    line-height: 1.1;
   }
 
   .mobile-bottom-nav {
@@ -646,5 +730,65 @@ dd {
   .custody-overlay-card {
     width: 100%;
     border-radius: 22px;
+  }
+
+  .panel {
+    padding: 18px;
+  }
+
+  .subpanel {
+    padding: 16px;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+    font-size: 0.72rem;
+  }
+
+  h2 {
+    font-size: 1.12rem;
+    margin-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 0.98rem;
+    margin-bottom: 6px;
+  }
+
+  dl {
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  dt {
+    font-size: 0.8rem;
+  }
+
+  dd {
+    font-size: 0.98rem;
+  }
+
+  .stats-grid,
+  .stats-grid.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+
+  .crime-card-grid {
+    gap: 12px;
+  }
+
+  .crime-card {
+    gap: 10px;
+  }
+
+  .crime-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crime-card-button {
+    width: auto;
+    min-width: 112px;
+    padding: 10px 16px;
   }
 }

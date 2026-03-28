@@ -105,20 +105,7 @@ export function AppShell({
       {mobileNavigation && stickyMenuConfig.header.enabled ? (
         <header className="mobile-game-header">
           <div className="mobile-game-header-row">
-            <div>
-              <p className="eyebrow">Game</p>
-              <h2>{title}</h2>
-            </div>
-            <button
-              className="button button-secondary mobile-logout-button"
-              type="button"
-              onClick={() => {
-                logout();
-                router.replace("/login");
-              }}
-            >
-              Log out
-            </button>
+            <h2>{title}</h2>
           </div>
           <div className="mobile-resource-strip" aria-label="Player resources">
             {stickyMenuConfig.header.resourceKeys.map((resourceKey) => (

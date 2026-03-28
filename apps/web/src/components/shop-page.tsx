@@ -11,9 +11,9 @@ import { AppShell } from "./app-shell";
 import { usePlayerState } from "./providers/player-state-provider";
 import { useSession } from "./providers/session-provider";
 
-type ShopSection = "weapons" | "drugs";
+type ShopSection = "weapons" | "drugs" | "garage" | "realestate";
 
-const weaponCategoryOrder: readonly Exclude<ShopItemCategory, "drugs">[] = [
+const weaponCategoryOrder: readonly Exclude<ShopItemCategory, "drugs" | "garage" | "realestate">[] = [
   "handguns",
   "smg",
   "assault_rifle",
@@ -22,7 +22,7 @@ const weaponCategoryOrder: readonly Exclude<ShopItemCategory, "drugs">[] = [
   "armor"
 ];
 
-const weaponCategoryLabels: Record<Exclude<ShopItemCategory, "drugs">, string> = {
+const weaponCategoryLabels: Record<Exclude<ShopItemCategory, "drugs" | "garage" | "realestate">, string> = {
   handguns: "Handguns",
   smg: "SMG",
   assault_rifle: "Assault Rifles",
@@ -60,7 +60,19 @@ function describeShopItemStats(item: ShopItem): string {
 }
 
 function getShopSection(item: ShopItem): ShopSection {
-  return item.category === "drugs" ? "drugs" : "weapons";
+  if (item.category === "drugs") {
+    return "drugs";
+  }
+
+  if (item.category === "garage") {
+    return "garage";
+  }
+
+  if (item.category === "realestate") {
+    return "realestate";
+  }
+
+  return "weapons";
 }
 
 export function ShopPage() {
@@ -136,7 +148,10 @@ export function ShopPage() {
   );
 
   const weaponGroups = useMemo(() => {
-    const groups = new Map<Exclude<ShopItemCategory, "drugs">, ShopItem[]>();
+    const groups = new Map<
+      Exclude<ShopItemCategory, "drugs" | "garage" | "realestate">,
+      ShopItem[]
+    >();
 
     for (const category of weaponCategoryOrder) {
       groups.set(category, []);
@@ -147,7 +162,9 @@ export function ShopPage() {
         continue;
       }
 
-      groups.get(item.category as Exclude<ShopItemCategory, "drugs">)?.push(item);
+      groups.get(
+        item.category as Exclude<ShopItemCategory, "drugs" | "garage" | "realestate">
+      )?.push(item);
     }
 
     return weaponCategoryOrder
@@ -163,13 +180,23 @@ export function ShopPage() {
     () => unlockedItems.filter((item) => getShopSection(item) === "drugs"),
     [unlockedItems]
   );
+  const garageItems = useMemo(
+    () => unlockedItems.filter((item) => getShopSection(item) === "garage"),
+    [unlockedItems]
+  );
+  const realEstateItems = useMemo(
+    () => unlockedItems.filter((item) => getShopSection(item) === "realestate"),
+    [unlockedItems]
+  );
 
   const sectionCounts = useMemo(
     () => ({
       weapons: weaponGroups.reduce((total, group) => total + group.items.length, 0),
-      drugs: drugItems.length
+      drugs: drugItems.length,
+      garage: garageItems.length,
+      realestate: realEstateItems.length
     }),
-    [drugItems.length, weaponGroups]
+    [drugItems.length, garageItems.length, realEstateItems.length, weaponGroups]
   );
 
   const visibleItemCount = sectionCounts[activeSection];
@@ -177,7 +204,7 @@ export function ShopPage() {
   return (
     <AppShell
       title="Shop"
-      subtitle="Buy weapons for your inventory or use drugs immediately as energy-restoring consumables."
+      subtitle="Buy weapons, drugs, vehicles, and real estate with level-based access."
     >
       {error ? <p className="notice notice-error">{error}</p> : null}
       {successMessage ? <p className="notice notice-success">{successMessage}</p> : null}
@@ -194,6 +221,12 @@ export function ShopPage() {
             <div>
               <dt>Respect</dt>
               <dd>{player?.currentRespect ?? "..."}</dd>
+            </div>
+            <div>
+              <dt>Garage</dt>
+              <dd>
+                {player ? `${player.ownedVehicleCount}/${player.parkingSlots} vehicles` : "..."}
+              </dd>
             </div>
             <div>
               <dt>Next level</dt>
@@ -235,7 +268,7 @@ export function ShopPage() {
             <h2>Shop sections</h2>
           </div>
           <p className="muted">
-            Weapons stay in your inventory. Drugs are consumed immediately.
+            Weapons, cars, and houses stay in your inventory. Drugs are consumed immediately.
           </p>
         </div>
         <div className="shop-category-tabs" role="tablist" aria-label="Shop categories">
@@ -256,6 +289,24 @@ export function ShopPage() {
             onClick={() => setActiveSection("drugs")}
           >
             Drugs ({sectionCounts.drugs})
+          </button>
+          <button
+            className={`button button-secondary shop-category-tab${
+              activeSection === "garage" ? " is-active" : ""
+            }`}
+            type="button"
+            onClick={() => setActiveSection("garage")}
+          >
+            Garage ({sectionCounts.garage})
+          </button>
+          <button
+            className={`button button-secondary shop-category-tab${
+              activeSection === "realestate" ? " is-active" : ""
+            }`}
+            type="button"
+            onClick={() => setActiveSection("realestate")}
+          >
+            Real estate ({sectionCounts.realestate})
           </button>
         </div>
       </section>
@@ -282,8 +333,11 @@ export function ShopPage() {
                     <p className="muted">
                       {item.category} / {item.equipSlot}
                     </p>
-                    <p className="meta">{describeShopItemStats(item)}</p>
-                    <p className="price-tag">{formatMoney(item.price)}</p>
+                  <p className="meta">{describeShopItemStats(item)}</p>
+                  {item.respectBonus ? (
+                    <p className="meta">Respect bonus: +{item.respectBonus}</p>
+                  ) : null}
+                  <p className="price-tag">{formatMoney(item.price)}</p>
                     <p className="meta">
                       Available at your current rank: {player?.rank ?? item.unlockRank}
                     </p>
@@ -301,33 +355,99 @@ export function ShopPage() {
             </section>
           ))
         )
-      ) : drugItems.length === 0 ? (
+      ) : activeSection === "drugs" ? (
+        drugItems.length === 0 ? (
+          <section className="panel">
+            <p className="muted">No drugs are unlocked at your current level yet.</p>
+          </section>
+        ) : (
+          <section className="panel">
+            <p className="eyebrow">Drugs</p>
+            <h2>Instant consumables</h2>
+            <p className="muted">
+              Drugs are consumed immediately on purchase and restore energy up to the server-side max.
+            </p>
+            <div className="card-grid">
+              {drugItems.map((item) => (
+                <article key={item.id} className="subpanel">
+                  <p className="eyebrow">Direct use</p>
+                  <h3>{item.name}</h3>
+                  <p className="muted">Drugs / consumable</p>
+                <p className="meta">{describeConsumableEffects(item)}</p>
+                <p className="price-tag">{formatMoney(item.price)}</p>
+                  <p className="meta">Applied immediately to your player resources.</p>
+                  <button
+                    className="button"
+                    disabled={!accessToken || actionKey === item.id}
+                    type="button"
+                    onClick={() => void handlePurchase(item)}
+                  >
+                    {actionKey === item.id ? "Processing..." : "Buy and use"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )
+      ) : activeSection === "garage" ? (
+        garageItems.length === 0 ? (
+          <section className="panel">
+            <p className="muted">No vehicles are unlocked at your current level yet.</p>
+          </section>
+        ) : (
+          <section className="panel">
+            <p className="eyebrow">Garage</p>
+            <h2>Vehicles</h2>
+            <p className="muted">Purchased vehicles are stored as owned assets in your inventory.</p>
+            <div className="card-grid">
+              {garageItems.map((item) => (
+                <article key={item.id} className="subpanel">
+                  <p className="eyebrow">Owned asset</p>
+                  <h3>{item.name}</h3>
+                  <p className="muted">Garage / vehicle</p>
+                  <p className="meta">Respect bonus: +{item.respectBonus ?? 0}</p>
+                  <p className="meta">Unlocks at {item.unlockRank}</p>
+                  <p className="price-tag">{formatMoney(item.price)}</p>
+                  <button
+                    className="button"
+                    disabled={!accessToken || actionKey === item.id}
+                    type="button"
+                    onClick={() => void handlePurchase(item)}
+                  >
+                    {actionKey === item.id ? "Processing..." : "Buy vehicle"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )
+      ) : realEstateItems.length === 0 ? (
         <section className="panel">
-          <p className="muted">No drugs are unlocked at your current level yet.</p>
+          <p className="muted">No houses are unlocked at your current level yet.</p>
         </section>
       ) : (
         <section className="panel">
-          <p className="eyebrow">Drugs</p>
-          <h2>Instant consumables</h2>
-          <p className="muted">
-            Drugs are consumed immediately on purchase and restore energy up to the server-side max.
-          </p>
+          <p className="eyebrow">Real estate</p>
+          <h2>Properties</h2>
+          <p className="muted">Purchased houses are stored as owned assets in your inventory.</p>
           <div className="card-grid">
-            {drugItems.map((item) => (
+            {realEstateItems.map((item) => (
               <article key={item.id} className="subpanel">
-                <p className="eyebrow">Direct use</p>
+                <p className="eyebrow">Owned asset</p>
                 <h3>{item.name}</h3>
-                <p className="muted">Drugs / consumable</p>
-                <p className="meta">{describeConsumableEffects(item)}</p>
+                <p className="muted">Real estate / property</p>
+                <p className="meta">
+                  Respect bonus: +{item.respectBonus ?? 0} / Parking slots: {item.parkingSlots ?? 0}
+                </p>
+                <p className="meta">Unlocks at {item.unlockRank}</p>
                 <p className="price-tag">{formatMoney(item.price)}</p>
-                <p className="meta">Applied immediately to your player resources.</p>
                 <button
                   className="button"
                   disabled={!accessToken || actionKey === item.id}
                   type="button"
                   onClick={() => void handlePurchase(item)}
                 >
-                  {actionKey === item.id ? "Processing..." : "Buy and use"}
+                  {actionKey === item.id ? "Processing..." : "Buy property"}
                 </button>
               </article>
             ))}

@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 
 import { AuthModule } from "../auth/auth.module";
 import { PlayerModule } from "../player/player.module";
@@ -12,7 +12,7 @@ import { PrismaInventoryBalanceRepository } from "./infrastructure/prisma-invent
 import { PrismaInventoryRepository } from "./infrastructure/prisma-inventory.repository";
 
 @Module({
-  imports: [AuthModule, PlayerModule, DomainEventsModule],
+  imports: [AuthModule, forwardRef(() => PlayerModule), DomainEventsModule],
   controllers: [InventoryController],
   providers: [
     InventoryBalanceService,

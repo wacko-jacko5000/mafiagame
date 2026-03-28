@@ -1,9 +1,10 @@
-import { getEquipmentItemById } from "./inventory.catalog";
+import { getOwnedShopItemById } from "./inventory.catalog";
 import type {
   EquipmentSlot,
   EquippedInventory,
   InventoryListItem,
   EquipmentItemDefinition,
+  OwnedShopItemDefinition,
   PlayerShopItem,
   ShopCatalogItem,
   ShopItemDefinition,
@@ -12,7 +13,7 @@ import type {
 
 export function toInventoryListItem(
   ownedItem: PlayerInventoryItemSnapshot,
-  item: EquipmentItemDefinition
+  item: OwnedShopItemDefinition
 ): InventoryListItem {
   return {
     id: ownedItem.id,
@@ -24,6 +25,8 @@ export function toInventoryListItem(
     price: item.price,
     equipSlot: item.equipSlot,
     unlockLevel: item.unlockLevel,
+    respectBonus: item.respectBonus,
+    parkingSlots: item.parkingSlots,
     equippedSlot: ownedItem.equippedSlot,
     marketListingId: ownedItem.marketListingId,
     weaponStats: item.weaponStats,
@@ -33,10 +36,11 @@ export function toInventoryListItem(
 }
 
 export function buildInventoryList(
-  ownedItems: readonly PlayerInventoryItemSnapshot[]
+  ownedItems: readonly PlayerInventoryItemSnapshot[],
+  resolveItem: (itemId: string) => OwnedShopItemDefinition | undefined = getOwnedShopItemById
 ): InventoryListItem[] {
   return ownedItems.flatMap((ownedItem) => {
-    const item = getEquipmentItemById(ownedItem.itemId);
+    const item = resolveItem(ownedItem.itemId);
 
     if (!item) {
       return [];
@@ -96,6 +100,8 @@ export function toShopCatalogItem(
     equipSlot: item.equipSlot,
     unlockLevel: item.unlockLevel,
     unlockRank,
+    respectBonus: item.respectBonus,
+    parkingSlots: item.parkingSlots,
     weaponStats: item.weaponStats,
     armorStats: item.armorStats,
     consumableEffects: item.consumableEffects

@@ -279,6 +279,9 @@ model PlayerActivity {
 
 model CrimeBalance {
   crimeId        String   @id @db.VarChar(64)
+  name           String?  @db.VarChar(120)
+  unlockLevel    Int?
+  difficulty     String?  @db.VarChar(16)
   energyCost     Int
   successRate    Float
   cashRewardMin  Int
@@ -291,10 +294,23 @@ model CrimeBalance {
 }
 
 model ShopItemBalance {
-  itemId     String   @id @db.VarChar(64)
-  price      Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  itemId                String   @id @db.VarChar(64)
+  name                  String?  @db.VarChar(120)
+  type                  String?  @db.VarChar(16)
+  category              String?  @db.VarChar(32)
+  delivery              String?  @db.VarChar(16)
+  equipSlot             String?  @db.VarChar(16)
+  unlockLevel           Int?
+  respectBonus          Int?
+  parkingSlots          Int?
+  damageBonus           Int?
+  damageReduction       Int?
+  resourceEffectResource String? @db.VarChar(16)
+  resourceEffectAmount  Int?
+  archived              Boolean? @default(false)
+  price                 Int
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@map("shop_item_balances")
 }

@@ -8,12 +8,6 @@ import {
 import { PlayerService } from "../../player/application/player.service";
 import { DomainEventsService } from "../../../platform/domain-events/domain-events.service";
 import {
-  getConsumableItemById,
-  getEquipmentItemById,
-  getShopItemById,
-  starterShopItemCatalog
-} from "../domain/inventory.catalog";
-import {
   InvalidEquipmentSlotError,
   InsufficientCashForItemError,
   InventoryItemEquipLevelLockedError,
@@ -24,8 +18,8 @@ import {
   UnknownEquipmentSlotError
 } from "../domain/inventory.errors";
 import {
-  buildEquippedInventory,
   buildInventoryList,
+  buildEquippedInventory,
   parseEquipmentSlot,
   toPlayerShopItem,
   toShopCatalogItem,
@@ -33,10 +27,12 @@ import {
 } from "../domain/inventory.policy";
 import type {
   ConsumableEffect,
+  ConsumableItemDefinition,
   EquipmentSlot,
   EquippedInventory,
   InventoryCombatLoadout,
   InventoryListItem,
+  PlayerAssetBonuses,
   PlayerShopItem,
   PurchaseShopItemResult,
   ShopCatalogItem
@@ -45,6 +41,8 @@ import {
   INVENTORY_REPOSITORY,
   type InventoryRepository
 } from "./inventory.repository";
+import { derivePlayerProgression } from "../../player/domain/player.policy";
+import { InventoryBalanceService } from "./inventory-balance.service";
 
 @Injectable()
 export class InventoryService {
@@ -53,20 +51,22 @@ export class InventoryService {
     private readonly playerService: PlayerService,
     @Inject(DomainEventsService)
     private readonly domainEventsService: DomainEventsService,
+    @Inject(InventoryBalanceService)
+    private readonly inventoryBalanceService: InventoryBalanceService,
     @Inject(INVENTORY_REPOSITORY)
     private readonly inventoryRepository: InventoryRepository
   ) {}
 
   listShopItems(): ShopCatalogItem[] {
-    return starterShopItemCatalog.map((item) =>
+    return this.inventoryBalanceService.listShopItemBalances().map((item) =>
       toShopCatalogItem(item, this.getUnlockRankName(item.unlockLevel))
     );
   }
 
   async listShopItemsForPlayer(playerId: string): Promise<PlayerShopItem[]> {
-    const progression = await this.playerService.getPlayerProgression(playerId);
+    const progression = await this.getEffectivePlayerProgression(playerId);
 
-    return starterShopItemCatalog.map((item) =>
+    return this.inventoryBalanceService.listShopItemBalances().map((item) =>
       toPlayerShopItem(
         item,
         this.getUnlockRankName(item.unlockLevel),
@@ -79,7 +79,7 @@ export class InventoryService {
     await this.playerService.getPlayerById(playerId);
 
     const ownedItems = await this.inventoryRepository.listPlayerItems(playerId);
-    return buildInventoryList(ownedItems);
+    return buildInventoryList(ownedItems, (itemId) => this.resolveOwnedShopItem(itemId));
   }
 
   async getEquippedItems(playerId: string): Promise<EquippedInventory> {
@@ -96,7 +96,10 @@ export class InventoryService {
             inventoryItemId: equippedItems.weapon.id,
             itemId: equippedItems.weapon.itemId,
             attackBonus:
-              getEquipmentItemById(equippedItems.weapon.itemId)?.weaponStats?.damageBonus ?? 0
+              this.inventoryBalanceService.findEquipmentItemById(
+                equippedItems.weapon.itemId,
+                { includeArchived: true }
+              )?.weaponStats?.damageBonus ?? 0
           }
         : null,
       armor: equippedItems.armor
@@ -104,7 +107,10 @@ export class InventoryService {
             inventoryItemId: equippedItems.armor.id,
             itemId: equippedItems.armor.itemId,
             defenseBonus:
-              getEquipmentItemById(equippedItems.armor.itemId)?.armorStats?.damageReduction ?? 0
+              this.inventoryBalanceService.findEquipmentItemById(
+                equippedItems.armor.itemId,
+                { includeArchived: true }
+              )?.armorStats?.damageReduction ?? 0
           }
         : null
     };
@@ -114,13 +120,13 @@ export class InventoryService {
     playerId: string,
     itemId: string
   ): Promise<PurchaseShopItemResult> {
-    const item = getShopItemById(itemId);
+    const item = this.inventoryBalanceService.findShopItemById(itemId);
 
     if (!item) {
       throw new NotFoundException(new InventoryItemNotFoundError(itemId).message);
     }
 
-    const progression = await this.playerService.getPlayerProgression(playerId);
+    const progression = await this.getEffectivePlayerProgression(playerId);
 
     if (progression.level < item.unlockLevel) {
       throw new BadRequestException(
@@ -132,8 +138,18 @@ export class InventoryService {
       );
     }
 
+    if (item.type === "vehicle") {
+      const bonuses = await this.getPlayerAssetBonuses(playerId);
+
+      if (bonuses.ownedVehicleCount >= bonuses.parkingSlots) {
+        throw new BadRequestException(
+          `You need more parking space before buying "${item.name}".`
+        );
+      }
+    }
+
     if (item.delivery === "instant") {
-      return this.purchaseConsumable(playerId, item.id);
+      return this.purchaseConsumable(playerId, item);
     }
 
     try {
@@ -190,7 +206,9 @@ export class InventoryService {
       );
     }
 
-    const item = getEquipmentItemById(ownedItem.itemId);
+    const item = this.inventoryBalanceService.findEquipmentItemById(ownedItem.itemId, {
+      includeArchived: true
+    });
 
     if (!item) {
       throw new NotFoundException(
@@ -204,7 +222,7 @@ export class InventoryService {
       );
     }
 
-    const progression = await this.playerService.getPlayerProgression(playerId);
+    const progression = await this.getEffectivePlayerProgression(playerId);
 
     if (progression.level < item.unlockLevel) {
       throw new BadRequestException(
@@ -236,7 +254,7 @@ export class InventoryService {
       );
     }
 
-    return buildInventoryList([equippedItem])[0]!;
+    return buildInventoryList([equippedItem], (itemId) => this.resolveOwnedShopItem(itemId))[0]!;
   }
 
   async unequipSlot(
@@ -255,19 +273,47 @@ export class InventoryService {
       return null;
     }
 
-    return buildInventoryList([unequippedItem])[0] ?? null;
+    return (
+      buildInventoryList([unequippedItem], (itemId) => this.resolveOwnedShopItem(itemId))[0] ??
+      null
+    );
+  }
+
+  async getPlayerAssetBonuses(playerId: string): Promise<PlayerAssetBonuses> {
+    const inventory = await this.listPlayerInventory(playerId);
+    const respectBonus = inventory.reduce(
+      (total, item) => total + (item.respectBonus ?? 0),
+      0
+    );
+    const parkingSlots = inventory.reduce(
+      (total, item) => total + (item.parkingSlots ?? 0),
+      0
+    );
+    const ownedVehicleCount = inventory.filter((item) => item.type === "vehicle").length;
+
+    return {
+      respectBonus,
+      parkingSlots,
+      ownedVehicleCount,
+      availableVehicleSlots: Math.max(0, parkingSlots - ownedVehicleCount)
+    };
+  }
+
+  private async getEffectivePlayerProgression(playerId: string) {
+    const player = await this.playerService.getPlayerById(playerId);
+
+    if (!player) {
+      return this.playerService.getPlayerProgression(playerId);
+    }
+
+    const bonuses = await this.getPlayerAssetBonuses(playerId);
+    return derivePlayerProgression(player.respect + bonuses.respectBonus);
   }
 
   private async purchaseConsumable(
     playerId: string,
-    itemId: string
+    item: ConsumableItemDefinition
   ): Promise<PurchaseShopItemResult> {
-    const item = getConsumableItemById(itemId);
-
-    if (!item) {
-      throw new NotFoundException(new InventoryItemNotFoundError(itemId).message);
-    }
-
     const player = await this.playerService.getPlayerById(playerId);
 
     if (player.cash < item.price) {
@@ -329,5 +375,13 @@ export class InventoryService {
 
   private getUnlockRankName(unlockLevel: number): string {
     return this.playerService.getRankNameForLevel(unlockLevel) ?? `Level ${unlockLevel}`;
+  }
+
+  private resolveOwnedShopItem(itemId: string) {
+    const item = this.inventoryBalanceService.findShopItemById(itemId, {
+      includeArchived: true
+    });
+
+    return item?.delivery === "inventory" ? item : undefined;
   }
 }

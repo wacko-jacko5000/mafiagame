@@ -62,6 +62,30 @@ interface StickyMenuUpdateInput {
   moreItems: StickyMenuConfig["moreItems"];
 }
 
+interface CreateCrimeInput {
+  id: string;
+  name: string;
+  unlockLevel: number;
+  difficulty: "easy" | "medium" | "hard" | "very_hard";
+  cashRewardMin: number;
+  cashRewardMax: number;
+  respectReward: number;
+}
+
+interface CreateShopItemInput {
+  id: string;
+  name: string;
+  kind: "weapon" | "drug" | "car" | "house";
+  weaponCategory?: "handguns" | "smg" | "assault_rifle" | "sniper" | "special";
+  unlockLevel: number;
+  price: number;
+  respectBonus?: number;
+  parkingSlots?: number;
+  damageBonus?: number;
+  effectResource?: "energy" | "health";
+  effectAmount?: number;
+}
+
 type AdminBalanceUpdatePayload =
   | {
       section: "crimes";
@@ -91,7 +115,30 @@ type AdminBalanceUpdatePayload =
       body: {
         items: Array<{
           id: string;
-          price: number;
+          name?: string;
+          unlockLevel?: number;
+          price?: number;
+          respectBonus?: number | null;
+          parkingSlots?: number | null;
+          damageBonus?: number | null;
+          effectResource?: "energy" | "health" | null;
+          effectAmount?: number | null;
+        }>;
+      };
+    }
+  | {
+      section: "custody";
+      body: {
+        entries: Array<{
+          statusType: "jail" | "hospital";
+          escalationEnabled?: boolean;
+          escalationPercentage?: number;
+          minimumPrice?: number | null;
+          roundingRule?: "ceil";
+          levels?: Array<{
+            level: number;
+            basePricePerMinute: number;
+          }>;
         }>;
       };
     }
@@ -414,6 +461,26 @@ export const gameApi = {
           body: payload.body
         }
       );
+    },
+    createCrime(input: CreateCrimeInput, accessToken: string) {
+      return apiRequest<AdminBalanceSectionView>("/api/admin/balance/crimes", {
+        method: "POST",
+        accessToken,
+        body: input
+      });
+    },
+    createShopItem(input: CreateShopItemInput, accessToken: string) {
+      return apiRequest<AdminBalanceSectionView>("/api/admin/balance/shop-items", {
+        method: "POST",
+        accessToken,
+        body: input
+      });
+    },
+    archiveShopItem(itemId: string, accessToken: string) {
+      return apiRequest<AdminBalanceSectionView>(`/api/admin/balance/shop-items/${itemId}/archive`, {
+        method: "POST",
+        accessToken
+      });
     },
     createSeason(input: CreateSeasonInput, accessToken: string) {
       return apiRequest<Season>("/api/admin/seasons", {

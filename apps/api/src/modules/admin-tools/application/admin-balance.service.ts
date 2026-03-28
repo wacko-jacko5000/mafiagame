@@ -12,6 +12,7 @@ import {
 } from "../../crime/application/crime-balance.service";
 import {
   InventoryBalanceService,
+  type CreateShopItemInput,
   type UpdateShopItemBalanceInput
 } from "../../inventory/application/inventory-balance.service";
 import {
@@ -53,6 +54,16 @@ const crimeUpdateSchema = z.object({
   )
 });
 
+const crimeCreateSchema = z.object({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1).max(120),
+  unlockLevel: z.number().int().positive(),
+  difficulty: z.enum(["easy", "medium", "hard", "very_hard"]),
+  cashRewardMin: z.number().int().nonnegative(),
+  cashRewardMax: z.number().int().nonnegative(),
+  respectReward: z.number().int().nonnegative()
+});
+
 const districtUpdateSchema = z.object({
   districts: z.array(
     z
@@ -74,11 +85,49 @@ const districtUpdateSchema = z.object({
 
 const shopItemUpdateSchema = z.object({
   items: z.array(
-    z.object({
-      id: z.string().min(1),
-      price: z.number().int().positive()
-    })
+    z
+      .object({
+        id: z.string().min(1),
+        name: z.string().trim().min(1).max(120).optional(),
+        unlockLevel: z.number().int().positive().optional(),
+        price: z.number().int().positive().optional(),
+        respectBonus: z.number().int().nonnegative().nullable().optional(),
+        parkingSlots: z.number().int().positive().nullable().optional(),
+        damageBonus: z.number().int().positive().nullable().optional(),
+        effectResource: z.enum(["energy", "health"]).nullable().optional(),
+        effectAmount: z.number().int().positive().nullable().optional()
+      })
+      .refine(
+        (value) =>
+          value.name !== undefined ||
+          value.unlockLevel !== undefined ||
+          value.price !== undefined ||
+          value.respectBonus !== undefined ||
+          value.parkingSlots !== undefined ||
+          value.damageBonus !== undefined ||
+          value.effectResource !== undefined ||
+          value.effectAmount !== undefined,
+        {
+          message: "Each shop item update must include at least one editable field."
+        }
+      )
   )
+});
+
+const shopItemCreateSchema = z.object({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1).max(120),
+  kind: z.enum(["weapon", "drug", "car", "house"]),
+  weaponCategory: z
+    .enum(["handguns", "smg", "assault_rifle", "sniper", "special"])
+    .optional(),
+  unlockLevel: z.number().int().positive(),
+  price: z.number().int().positive(),
+  respectBonus: z.number().int().nonnegative().optional(),
+  parkingSlots: z.number().int().positive().optional(),
+  damageBonus: z.number().int().positive().optional(),
+  effectResource: z.enum(["energy", "health"]).optional(),
+  effectAmount: z.number().int().positive().optional()
 });
 
 const custodyUpdateSchema = z.object({
@@ -130,6 +179,8 @@ function toCrimeAuditValue(entry: CrimeSectionView["entries"][number]): AuditVal
   return {
     id: entry.id,
     name: entry.name,
+    unlockLevel: entry.unlockLevel,
+    difficulty: entry.difficulty,
     energyCost: entry.energyCost,
     successRate: entry.successRate,
     cashRewardMin: entry.cashRewardMin,
@@ -160,6 +211,13 @@ function toShopItemAuditValue(
     delivery: entry.delivery,
     price: entry.price,
     equipSlot: entry.equipSlot,
+    unlockLevel: entry.unlockLevel,
+    respectBonus: entry.respectBonus ?? null,
+    parkingSlots: entry.parkingSlots ?? null,
+    damageBonus: entry.damageBonus ?? null,
+    damageReduction: entry.damageReduction ?? null,
+    effectResource: entry.effectResource ?? null,
+    effectAmount: entry.effectAmount ?? null,
     consumableEffects: entry.consumableEffects
       ? JSON.stringify(entry.consumableEffects)
       : null
@@ -222,6 +280,8 @@ export class AdminBalanceService {
         entries: this.crimeBalanceService.listCrimeBalances().map((crime) => ({
           id: crime.id,
           name: crime.name,
+          unlockLevel: crime.unlockLevel,
+          difficulty: crime.difficulty,
           energyCost: crime.energyCost,
           successRate: crime.successRate,
           cashRewardMin: crime.minReward,
@@ -276,19 +336,29 @@ export class AdminBalanceService {
 
     return {
       section: "shop-items",
-      label: "Starter Shop Items",
+      label: "Shop Catalog",
       editableFields: ["price"],
-      entries: this.inventoryBalanceService.listShopItemBalances().map((item) => ({
-        id: item.id,
-        name: item.name,
-        type: item.type,
-        category: item.category,
-        delivery: item.delivery,
-        price: item.price,
-        equipSlot: item.equipSlot,
-        consumableEffects: item.consumableEffects
-          ? [...item.consumableEffects]
-          : null
+        entries: this.inventoryBalanceService.listShopItemBalances().map((item) => ({
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          category: item.category,
+          delivery: item.delivery,
+          price: item.price,
+          equipSlot: item.equipSlot,
+          unlockLevel: item.unlockLevel,
+          respectBonus: item.respectBonus,
+          parkingSlots: item.parkingSlots,
+          damageBonus: item.weaponStats?.damageBonus ?? null,
+          damageReduction: item.armorStats?.damageReduction ?? null,
+          effectResource:
+            item.delivery === "instant" ? item.consumableEffects[0]?.resource ?? null : null,
+          effectAmount:
+            item.delivery === "instant" ? item.consumableEffects[0]?.amount ?? null : null,
+          isCustom: this.inventoryBalanceService.isCustomShopItem(item.id),
+          consumableEffects: item.consumableEffects
+            ? [...item.consumableEffects]
+            : null
       }))
     };
   }
@@ -375,6 +445,114 @@ export class AdminBalanceService {
       nextSection,
       changedByAccountId
     );
+
+    return nextSection;
+  }
+
+  async createCrime(
+    payload: unknown,
+    changedByAccountId: string | null
+  ): Promise<CrimeSectionView> {
+    const input = this.parsePayload(crimeCreateSchema, payload);
+
+    const nextCrime = await this.crimeBalanceService.createCrime({
+      id: input.id,
+      name: input.name,
+      unlockLevel: input.unlockLevel,
+      difficulty: input.difficulty,
+      cashRewardMin: input.cashRewardMin,
+      cashRewardMax: input.cashRewardMax,
+      respectReward: input.respectReward
+    });
+    const nextSection = (await this.getSection("crimes")) as CrimeSectionView;
+
+    await this.adminBalanceAuditRepository.createEntries([
+      {
+        section: "crimes",
+        targetId: nextCrime.id,
+        changedByAccountId,
+        previousValue: {
+          id: nextCrime.id,
+          name: null,
+          unlockLevel: null,
+          difficulty: null,
+          energyCost: null,
+          successRate: null,
+          cashRewardMin: null,
+          cashRewardMax: null,
+          respectReward: null
+        },
+        newValue: this.getAuditValue(nextSection, nextCrime.id)
+      }
+    ]);
+
+    return nextSection;
+  }
+
+  async createShopItem(
+    payload: unknown,
+    changedByAccountId: string | null
+  ): Promise<ShopItemSectionView> {
+    const input = this.parsePayload<CreateShopItemInput>(shopItemCreateSchema, payload);
+
+    const nextItem = await this.inventoryBalanceService.createShopItem(input);
+    const nextSection = (await this.getSection("shop-items")) as ShopItemSectionView;
+
+    await this.adminBalanceAuditRepository.createEntries([
+      {
+        section: "shop-items",
+        targetId: nextItem.id,
+        changedByAccountId,
+        previousValue: {
+          id: nextItem.id,
+          name: null,
+          type: null,
+          category: null,
+          delivery: null,
+          price: null,
+          equipSlot: null,
+          unlockLevel: null,
+          respectBonus: null,
+          parkingSlots: null,
+          damageBonus: null,
+          damageReduction: null,
+          effectResource: null,
+          effectAmount: null,
+          consumableEffects: null
+        },
+        newValue: this.getAuditValue(nextSection, nextItem.id)
+      }
+    ]);
+
+    return nextSection;
+  }
+
+  async archiveShopItem(
+    itemId: string,
+    changedByAccountId: string | null
+  ): Promise<ShopItemSectionView> {
+    const previousSection = (await this.getSection("shop-items")) as ShopItemSectionView;
+    const previousEntry = previousSection.entries.find((entry) => entry.id === itemId);
+
+    if (!previousEntry) {
+      throw new NotFoundException(`Balance entry "${itemId}" was not found.`);
+    }
+
+    await this.inventoryBalanceService.archiveShopItem(itemId);
+    const nextSection = (await this.getSection("shop-items")) as ShopItemSectionView;
+
+    await this.adminBalanceAuditRepository.createEntries([
+      {
+        section: "shop-items",
+        targetId: itemId,
+        changedByAccountId,
+        previousValue: toShopItemAuditValue(previousEntry),
+        newValue: {
+          id: itemId,
+          archived: "true"
+        }
+      }
+    ]);
 
     return nextSection;
   }
