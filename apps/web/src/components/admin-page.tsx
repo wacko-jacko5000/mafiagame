@@ -150,6 +150,38 @@ const adminWorkspaceTabs: AdminWorkspaceTab[] = [
   }
 ];
 
+const stickyMenuDestinationGroups: Array<{
+  id: string;
+  label: string;
+  description: string;
+  keys: StickyMenuDestinationKey[];
+}> = [
+  {
+    id: "core",
+    label: "Core",
+    description: "Primary player routes and shell controls.",
+    keys: ["home", "crimes", "missions", "shop", "more"]
+  },
+  {
+    id: "shop",
+    label: "Shop",
+    description: "Dedicated store category destinations.",
+    keys: ["shop-weapons", "shop-drugs", "shop-garage", "shop-realestate"]
+  },
+  {
+    id: "economy",
+    label: "Economy",
+    description: "Progression, inventory, and economy pages.",
+    keys: ["business", "inventory", "market", "leaderboard"]
+  },
+  {
+    id: "world",
+    label: "World",
+    description: "Social systems and map-control destinations.",
+    keys: ["activity", "achievements", "gangs", "territory"]
+  }
+];
+
 const playerRankLabels: Record<number, string> = {
   1: "Scum",
   2: "Empty Suit",
@@ -283,6 +315,10 @@ export function AdminPage() {
   const activeTab = useMemo(
     () => adminWorkspaceTabs.find((tab) => tab.id === activeSection) ?? adminWorkspaceTabs[0],
     [activeSection]
+  );
+  const stickyPlacementLookup = useMemo(
+    () => new Map(stickyMenuPlacements.map((entry) => [entry.key, entry])),
+    [stickyMenuPlacements]
   );
 
   useEffect(() => {
@@ -2119,50 +2155,72 @@ export function AdminPage() {
             </div>
 
             <div className="admin-entry-list">
-              {stickyMenuPlacements
-                .slice()
-                .sort((left, right) => left.order - right.order || left.key.localeCompare(right.key))
-                .map((entry) => (
-                  <div key={entry.key} className="subpanel stack admin-entry-card">
-                    <div className="split-row">
-                      <div>
-                        <h3>{stickyMenuRegistry[entry.key].label}</h3>
-                        <p className="muted">{entry.key}</p>
-                      </div>
-                      <span className="status-pill">{entry.placement}</span>
-                    </div>
-
-                    <div className="stats-grid compact">
-                      <label className="field">
-                        <span>Placement</span>
-                        <select
-                          value={entry.placement}
-                          onChange={(event) =>
-                            updateStickyMenuPlacement(
-                              entry.key,
-                              event.target.value as StickyMenuPlacementEntry["placement"]
-                            )
-                          }
-                        >
-                          <option value="hidden">Hidden</option>
-                          <option value="primary">Primary</option>
-                          {entry.key !== "more" ? <option value="more">More</option> : null}
-                        </select>
-                      </label>
-                      <label className="field">
-                        <span>Order</span>
-                        <input
-                          min="1"
-                          type="number"
-                          value={entry.order}
-                          onChange={(event) =>
-                            updateStickyMenuOrder(entry.key, Number(event.target.value))
-                          }
-                        />
-                      </label>
-                    </div>
+              {stickyMenuDestinationGroups.map((group) => (
+                <div key={group.id} className="subpanel stack">
+                  <div>
+                    <h3>{group.label}</h3>
+                    <p className="muted">{group.description}</p>
                   </div>
-                ))}
+
+                  <div className="admin-entry-list">
+                    {group.keys
+                      .map((key) => stickyPlacementLookup.get(key))
+                      .filter((entry): entry is StickyMenuPlacementEntry => Boolean(entry))
+                      .sort(
+                        (left, right) => left.order - right.order || left.key.localeCompare(right.key)
+                      )
+                      .map((entry) => (
+                        <div key={entry.key} className="subpanel stack admin-entry-card sticky-destination-card">
+                          <div className="split-row">
+                            <div>
+                              <h3>{stickyMenuRegistry[entry.key].label}</h3>
+                              <p className="muted">{entry.key}</p>
+                            </div>
+                            <span className="status-pill">{entry.placement}</span>
+                          </div>
+
+                          <div className="stats-grid compact">
+                            <label className="field">
+                              <span>Placement</span>
+                              <select
+                                value={entry.placement}
+                                onChange={(event) =>
+                                  updateStickyMenuPlacement(
+                                    entry.key,
+                                    event.target.value as StickyMenuPlacementEntry["placement"]
+                                  )
+                                }
+                                >
+                                  <option value="hidden">Hidden</option>
+                                  {entry.key === "shop" || entry.key === "more" ? (
+                                    <option value="primary">Primary</option>
+                                  ) : group.id === "shop" ? (
+                                    <option value="shop">Shop</option>
+                                  ) : (
+                                    <>
+                                      <option value="primary">Primary</option>
+                                      <option value="more">More</option>
+                                    </>
+                                  )}
+                                </select>
+                              </label>
+                            <label className="field">
+                              <span>Order</span>
+                              <input
+                                min="1"
+                                type="number"
+                                value={entry.order}
+                                onChange={(event) =>
+                                  updateStickyMenuOrder(entry.key, Number(event.target.value))
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="stats-grid compact">
@@ -2171,6 +2229,12 @@ export function AdminPage() {
                 <p className="muted">
                   {stickyMenuPlacements.filter((entry) => entry.placement === "primary").length}
                   {stickyMenuConfig ? ` / ${stickyMenuConfig.maxPrimaryItems}` : ""}
+                </p>
+              </div>
+              <div className="subpanel">
+                <strong>Shop count</strong>
+                <p className="muted">
+                  {stickyMenuPlacements.filter((entry) => entry.placement === "shop").length}
                 </p>
               </div>
               <div className="subpanel">

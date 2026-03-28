@@ -59,6 +59,7 @@ interface StickyMenuUpdateInput {
     resourceKeys: StickyMenuConfig["header"]["resourceKeys"];
   };
   primaryItems: StickyMenuConfig["primaryItems"];
+  shopItems: StickyMenuConfig["shopItems"];
   moreItems: StickyMenuConfig["moreItems"];
 }
 

@@ -51,6 +51,7 @@ export function AppShell({
     defaultStickyMenuConfig
   );
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isShopOpen, setIsShopOpen] = useState(false);
   const visibleNavigationItems = navigationItems.filter(
     (item) => item.href !== "/admin" || account?.isAdmin
   );
@@ -63,6 +64,8 @@ export function AppShell({
         rank: `Lv ${player.level} ${player.rank}`
       }
     : null;
+  const energyPercent = player ? Math.max(0, Math.min(100, player.energy)) : null;
+  const respectPercent = player ? Math.max(0, Math.min(100, player.progressPercent)) : null;
 
   useEffect(() => {
     if (!mobileNavigation) {
@@ -94,6 +97,7 @@ export function AppShell({
 
   useEffect(() => {
     setIsMoreOpen(false);
+    setIsShopOpen(false);
   }, [pathname]);
 
   return (
@@ -109,9 +113,37 @@ export function AppShell({
           </div>
           <div className="mobile-resource-strip" aria-label="Player resources">
             {stickyMenuConfig.header.resourceKeys.map((resourceKey) => (
-              <div key={resourceKey} className="mobile-resource-pill">
+              <div
+                key={resourceKey}
+                className={
+                  resourceKey === "energy" && energyPercent !== null && energyPercent <= 25
+                    ? "mobile-resource-pill mobile-resource-pill-energy is-low"
+                    : resourceKey === "respect" && respectPercent !== null && respectPercent >= 85
+                      ? "mobile-resource-pill mobile-resource-pill-respect is-near-level"
+                      : resourceKey === "respect"
+                        ? "mobile-resource-pill mobile-resource-pill-respect"
+                    : resourceKey === "energy"
+                      ? "mobile-resource-pill mobile-resource-pill-energy"
+                      : "mobile-resource-pill"
+                }
+              >
                 <span>{stickyHeaderResourceLabels[resourceKey]}</span>
                 <strong>{headerResourceValues?.[resourceKey] ?? "..."}</strong>
+                {resourceKey === "energy" ? (
+                  <div className="mobile-energy-bar" aria-hidden="true">
+                    <div
+                      className="mobile-energy-bar-fill"
+                      style={{ width: `${energyPercent ?? 0}%` }}
+                    />
+                  </div>
+                ) : resourceKey === "respect" ? (
+                  <div className="mobile-energy-bar" aria-hidden="true">
+                    <div
+                      className="mobile-energy-bar-fill mobile-respect-bar-fill"
+                      style={{ width: `${respectPercent ?? 0}%` }}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -172,6 +204,15 @@ export function AppShell({
             />
           ) : null}
 
+          {isShopOpen ? (
+            <button
+              aria-label="Close Shop menu"
+              className="sticky-more-backdrop"
+              type="button"
+              onClick={() => setIsShopOpen(false)}
+            />
+          ) : null}
+
           {isMoreOpen ? (
             <section className="sticky-more-sheet" aria-label="More destinations">
               <div className="split-row">
@@ -202,6 +243,38 @@ export function AppShell({
             </section>
           ) : null}
 
+          {isShopOpen ? (
+            <section className="sticky-more-sheet" aria-label="Shop categories">
+              <div className="split-row">
+                <div>
+                  <p className="eyebrow">Shop</p>
+                  <h2>Categories</h2>
+                </div>
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  onClick={() => setIsShopOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+              <div className="sticky-more-grid">
+                {stickyMenuConfig.shopItems.map(
+                  (key) => {
+                    const item = stickyMenuRegistry[key];
+
+                    return item.href ? (
+                      <Link key={key} className="sticky-more-link" href={item.href}>
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
+                    ) : null;
+                  }
+                )}
+              </div>
+            </section>
+          ) : null}
+
           <nav className="mobile-bottom-nav" aria-label="Primary mobile navigation">
             {stickyMenuConfig.primaryItems.map((key) => {
               const item = stickyMenuRegistry[key];
@@ -214,6 +287,23 @@ export function AppShell({
                     className={isMoreOpen ? "mobile-nav-link active" : "mobile-nav-link"}
                     type="button"
                     onClick={() => setIsMoreOpen((current) => !current)}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                );
+              }
+
+              if (key === "shop") {
+                return (
+                  <button
+                    key={key}
+                    className={isShopOpen || pathname.startsWith("/shop") ? "mobile-nav-link active" : "mobile-nav-link"}
+                    type="button"
+                    onClick={() => {
+                      setIsMoreOpen(false);
+                      setIsShopOpen((current) => !current);
+                    }}
                   >
                     {item.icon}
                     <span>{item.label}</span>

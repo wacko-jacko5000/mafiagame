@@ -18,7 +18,7 @@ export interface StickyMenuItemMeta {
 
 export interface StickyMenuPlacementEntry {
   key: StickyMenuDestinationKey;
-  placement: "hidden" | "primary" | "more";
+  placement: "hidden" | "primary" | "shop" | "more";
   order: number;
 }
 
@@ -60,6 +60,30 @@ export const stickyMenuRegistry: Record<StickyMenuDestinationKey, StickyMenuItem
     label: "Shop",
     href: "/shop",
     icon: icon("M5 8h14l-1 12H6L5 8ZM8 8V6a4 4 0 1 1 8 0v2")
+  },
+  "shop-weapons": {
+    key: "shop-weapons",
+    label: "Weapons",
+    href: "/shop/weapons",
+    icon: icon("M4 19 20 5M7 17l2 2M15 7l2 2M3 21l4-1-3-3-1 4Z")
+  },
+  "shop-drugs": {
+    key: "shop-drugs",
+    label: "Drugs",
+    href: "/shop/drugs",
+    icon: icon("M8 4h8v4a4 4 0 0 1-8 0V4Zm-2 8h12a4 4 0 1 1-12 0Z")
+  },
+  "shop-garage": {
+    key: "shop-garage",
+    label: "Garage",
+    href: "/shop/garage",
+    icon: icon("M4 12l8-6 8 6v8H4v-8Zm4 8v-5h8v5")
+  },
+  "shop-realestate": {
+    key: "shop-realestate",
+    label: "Real Estate",
+    href: "/shop/real-estate",
+    icon: icon("M3 20h18M6 20V9l6-4 6 4v11M10 20v-5h4v5")
   },
   business: {
     key: "business",
@@ -131,6 +155,12 @@ export const defaultStickyMenuConfig: StickyMenuConfig = {
     resourceKeys: ["cash", "respect"]
   },
   primaryItems: ["home", "crimes", "missions", "shop", "more"],
+  shopItems: [
+    "shop-weapons",
+    "shop-drugs",
+    "shop-garage",
+    "shop-realestate"
+  ],
   moreItems: [
     "business",
     "inventory",
@@ -146,6 +176,10 @@ export const defaultStickyMenuConfig: StickyMenuConfig = {
     "crimes",
     "missions",
     "shop",
+    "shop-weapons",
+    "shop-drugs",
+    "shop-garage",
+    "shop-realestate",
     "business",
     "inventory",
     "activity",
@@ -192,6 +226,16 @@ export function createStickyMenuPlacementState(
     }
 
     if (key !== "more") {
+      const shopIndex = config.shopItems.indexOf(key);
+
+      if (shopIndex >= 0) {
+        return {
+          key,
+          placement: "shop",
+          order: shopIndex + 1
+        };
+      }
+
       const moreIndex = config.moreItems.indexOf(key);
 
       if (moreIndex >= 0) {
@@ -227,6 +271,13 @@ export function buildStickyMenuUpdatePayload(input: {
     )
     .sort((left, right) => left.order - right.order)
     .map((entry) => entry.key);
+  const shopItems = input.placements
+    .filter(
+      (entry): entry is StickyMenuPlacementEntry & { key: Exclude<StickyMenuDestinationKey, "more"> } =>
+        entry.placement === "shop" && entry.key !== "more"
+    )
+    .sort((left, right) => left.order - right.order)
+    .map((entry) => entry.key);
 
   return {
     header: {
@@ -234,6 +285,7 @@ export function buildStickyMenuUpdatePayload(input: {
       resourceKeys: [...input.resourceKeys]
     },
     primaryItems,
+    shopItems,
     moreItems
   };
 }

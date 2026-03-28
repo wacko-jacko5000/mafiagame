@@ -441,6 +441,10 @@ dd {
   border-radius: 18px;
 }
 
+.sticky-destination-card {
+  background: rgba(255, 255, 255, 0.025);
+}
+
 .admin-audit-item {
   align-items: start;
 }
@@ -638,6 +642,51 @@ dd {
   .mobile-resource-pill strong {
     font-size: 0.95rem;
     line-height: 1.1;
+  }
+
+  .mobile-resource-pill-energy {
+    min-width: 124px;
+  }
+
+  .mobile-resource-pill-respect {
+    min-width: 124px;
+  }
+
+  .mobile-energy-bar {
+    height: 6px;
+    margin-top: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .mobile-energy-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #5ccf8e, #b7eb72);
+    transition:
+      width 180ms ease,
+      background 180ms ease;
+  }
+
+  .mobile-resource-pill-energy.is-low .mobile-energy-bar-fill {
+    background: linear-gradient(90deg, #d4564f, #ff8b6a);
+  }
+
+  .mobile-resource-pill-energy.is-low strong {
+    color: #ffd3cc;
+  }
+
+  .mobile-respect-bar-fill {
+    background: linear-gradient(90deg, #8f6bff, #f1c37d);
+  }
+
+  .mobile-resource-pill-respect.is-near-level .mobile-respect-bar-fill {
+    background: linear-gradient(90deg, #f1c37d, #ffe8a3);
+  }
+
+  .mobile-resource-pill-respect.is-near-level strong {
+    color: #fff0c9;
   }
 
   .mobile-bottom-nav {

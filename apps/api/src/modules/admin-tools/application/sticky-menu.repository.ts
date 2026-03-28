@@ -9,6 +9,7 @@ export interface StickyMenuConfigRecord {
   headerEnabled: boolean;
   headerResourceKeys: StickyHeaderResourceKey[];
   primaryItems: StickyMenuDestinationKey[];
+  shopItems: StickyMenuLeafDestinationKey[];
   moreItems: StickyMenuLeafDestinationKey[];
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +19,7 @@ export interface UpsertStickyMenuConfigInput {
   headerEnabled: boolean;
   headerResourceKeys: StickyHeaderResourceKey[];
   primaryItems: StickyMenuDestinationKey[];
+  shopItems: StickyMenuLeafDestinationKey[];
   moreItems: StickyMenuLeafDestinationKey[];
 }
 

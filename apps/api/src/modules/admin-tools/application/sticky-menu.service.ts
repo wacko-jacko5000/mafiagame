@@ -26,10 +26,19 @@ const stickyMenuUpdateSchema = z
       .array(z.enum(stickyMenuDestinationKeys))
       .min(1)
       .max(stickyMenuPrimaryMaxItems),
+    shopItems: z.array(
+      z.enum(
+        stickyMenuDestinationKeys.filter(
+          (item): item is StickyMenuLeafDestinationKey =>
+            item !== "more" && item.startsWith("shop-")
+        ) as [StickyMenuLeafDestinationKey, ...StickyMenuLeafDestinationKey[]]
+      )
+    ),
     moreItems: z.array(
       z.enum(
         stickyMenuDestinationKeys.filter(
-          (item): item is StickyMenuLeafDestinationKey => item !== "more"
+          (item): item is StickyMenuLeafDestinationKey =>
+            item !== "more" && !item.startsWith("shop-")
         ) as [StickyMenuLeafDestinationKey, ...StickyMenuLeafDestinationKey[]]
       )
     )
@@ -59,10 +68,24 @@ const stickyMenuUpdateSchema = z
       });
     }
 
+    if (new Set(value.shopItems).size !== value.shopItems.length) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["shopItems"],
+        message: "Shop menu items must be unique."
+      });
+    }
+
     const primaryWithoutMore = value.primaryItems.filter(
       (item): item is StickyMenuLeafDestinationKey => item !== "more"
     );
     const duplicateAcrossGroups = value.moreItems.find((item) => primaryWithoutMore.includes(item));
+    const duplicateAcrossShopAndPrimary = value.shopItems.find((item) =>
+      primaryWithoutMore.includes(item)
+    );
+    const duplicateAcrossShopAndMore = value.shopItems.find((item) =>
+      value.moreItems.includes(item)
+    );
 
     if (duplicateAcrossGroups) {
       context.addIssue({
@@ -72,8 +95,26 @@ const stickyMenuUpdateSchema = z
       });
     }
 
+    if (duplicateAcrossShopAndPrimary) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["shopItems"],
+        message: `Menu item "${duplicateAcrossShopAndPrimary}" cannot appear in both primary and Shop sections.`
+      });
+    }
+
+    if (duplicateAcrossShopAndMore) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["shopItems"],
+        message: `Menu item "${duplicateAcrossShopAndMore}" cannot appear in both Shop and More sections.`
+      });
+    }
+
     const hasMoreShortcut = value.primaryItems.includes("more");
     const hasMoreItems = value.moreItems.length > 0;
+    const hasShopShortcut = value.primaryItems.includes("shop");
+    const hasShopItems = value.shopItems.length > 0;
 
     if (hasMoreShortcut !== hasMoreItems) {
       context.addIssue({
@@ -82,6 +123,16 @@ const stickyMenuUpdateSchema = z
         message: hasMoreItems
           ? 'Primary items must include "more" when the More panel has destinations.'
           : 'Primary items may include "more" only when the More panel has destinations.'
+      });
+    }
+
+    if (hasShopShortcut !== hasShopItems) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: hasShopShortcut ? ["shopItems"] : ["primaryItems"],
+        message: hasShopItems
+          ? 'Primary items must include "shop" when the Shop panel has destinations.'
+          : 'Primary items may include "shop" only when the Shop panel has destinations.'
       });
     }
   });
@@ -106,6 +157,7 @@ export class StickyMenuService {
         resourceKeys: record.headerResourceKeys
       },
       primaryItems: record.primaryItems,
+      shopItems: record.shopItems,
       moreItems: record.moreItems
     });
   }
@@ -123,6 +175,7 @@ export class StickyMenuService {
       headerEnabled: parsed.data.header.enabled,
       headerResourceKeys: parsed.data.header.resourceKeys,
       primaryItems: parsed.data.primaryItems,
+      shopItems: parsed.data.shopItems,
       moreItems: parsed.data.moreItems
     });
 
@@ -132,6 +185,7 @@ export class StickyMenuService {
         resourceKeys: saved.headerResourceKeys
       },
       primaryItems: saved.primaryItems,
+      shopItems: saved.shopItems,
       moreItems: saved.moreItems
     });
   }
@@ -142,6 +196,7 @@ export class StickyMenuService {
       resourceKeys: StickyHeaderResourceKey[];
     };
     primaryItems: StickyMenuDestinationKey[];
+    shopItems: StickyMenuLeafDestinationKey[];
     moreItems: StickyMenuLeafDestinationKey[];
   }): StickyMenuConfig {
     return {
@@ -150,6 +205,7 @@ export class StickyMenuService {
         resourceKeys: [...config.header.resourceKeys]
       },
       primaryItems: [...config.primaryItems],
+      shopItems: [...config.shopItems],
       moreItems: [...config.moreItems],
       availableDestinationKeys: [...stickyMenuDestinationKeys],
       availableHeaderResourceKeys: [...stickyHeaderResourceKeys],

@@ -3,6 +3,10 @@ export const stickyMenuDestinationKeys = [
   "crimes",
   "missions",
   "shop",
+  "shop-weapons",
+  "shop-drugs",
+  "shop-garage",
+  "shop-realestate",
   "business",
   "inventory",
   "activity",
@@ -35,6 +39,7 @@ export interface StickyMenuConfig {
     resourceKeys: StickyHeaderResourceKey[];
   };
   primaryItems: StickyMenuDestinationKey[];
+  shopItems: StickyMenuLeafDestinationKey[];
   moreItems: StickyMenuLeafDestinationKey[];
   availableDestinationKeys: StickyMenuDestinationKey[];
   availableHeaderResourceKeys: StickyHeaderResourceKey[];
@@ -47,6 +52,12 @@ export const defaultStickyMenuConfig = {
     resourceKeys: ["cash", "respect"]
   },
   primaryItems: ["home", "crimes", "missions", "shop", "more"],
+  shopItems: [
+    "shop-weapons",
+    "shop-drugs",
+    "shop-garage",
+    "shop-realestate"
+  ],
   moreItems: [
     "business",
     "inventory",
@@ -63,5 +74,6 @@ export const defaultStickyMenuConfig = {
     resourceKeys: StickyHeaderResourceKey[];
   };
   primaryItems: StickyMenuDestinationKey[];
+  shopItems: StickyMenuLeafDestinationKey[];
   moreItems: StickyMenuLeafDestinationKey[];
 };

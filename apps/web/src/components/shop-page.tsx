@@ -75,7 +75,11 @@ function getShopSection(item: ShopItem): ShopSection {
   return "weapons";
 }
 
-export function ShopPage() {
+export function ShopPage({
+  initialSection = "weapons"
+}: Readonly<{
+  initialSection?: ShopSection;
+}>) {
   const { accessToken, account } = useSession();
   const { player, refreshPlayer } = usePlayerState();
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
@@ -83,7 +87,11 @@ export function ShopPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionKey, setActionKey] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<ShopSection>("weapons");
+  const [activeSection, setActiveSection] = useState<ShopSection>(initialSection);
+
+  useEffect(() => {
+    setActiveSection(initialSection);
+  }, [initialSection]);
 
   async function loadData() {
     if (!accessToken || !account?.player?.id) {
@@ -199,8 +207,6 @@ export function ShopPage() {
     [drugItems.length, garageItems.length, realEstateItems.length, weaponGroups]
   );
 
-  const visibleItemCount = sectionCounts[activeSection];
-
   return (
     <AppShell
       title="Shop"
@@ -208,108 +214,6 @@ export function ShopPage() {
     >
       {error ? <p className="notice notice-error">{error}</p> : null}
       {successMessage ? <p className="notice notice-success">{successMessage}</p> : null}
-
-      <section className="dashboard-grid">
-        <article className="panel">
-          <p className="eyebrow">Progressie</p>
-          <h2>Current access</h2>
-          <dl className="stats-grid compact">
-            <div>
-              <dt>Rank</dt>
-              <dd>{player ? `Level ${player.level} - ${player.rank}` : "..."}</dd>
-            </div>
-            <div>
-              <dt>Respect</dt>
-              <dd>{player?.currentRespect ?? "..."}</dd>
-            </div>
-            <div>
-              <dt>Garage</dt>
-              <dd>
-                {player ? `${player.ownedVehicleCount}/${player.parkingSlots} vehicles` : "..."}
-              </dd>
-            </div>
-            <div>
-              <dt>Next level</dt>
-              <dd>
-                {player
-                  ? player.nextLevel
-                    ? `${player.respectToNextLevel} respect until ${player.nextRank}`
-                    : "Max level"
-                  : "..."}
-              </dd>
-            </div>
-          </dl>
-        </article>
-
-        <article className="panel">
-          <p className="eyebrow">Resources</p>
-          <h2>Current buying power</h2>
-          <dl className="stats-grid compact">
-            <div>
-              <dt>Cash</dt>
-              <dd>{player ? formatMoney(player.cash) : "..."}</dd>
-            </div>
-            <div>
-              <dt>Energy</dt>
-              <dd>{player ? `${player.energy}/100` : "..."}</dd>
-            </div>
-            <div>
-              <dt>Visible items</dt>
-              <dd>{visibleItemCount}</dd>
-            </div>
-          </dl>
-        </article>
-      </section>
-
-      <section className="panel stack compact-stack">
-        <div className="split-row">
-          <div>
-            <p className="eyebrow">Category</p>
-            <h2>Shop sections</h2>
-          </div>
-          <p className="muted">
-            Weapons, cars, and houses stay in your inventory. Drugs are consumed immediately.
-          </p>
-        </div>
-        <div className="shop-category-tabs" role="tablist" aria-label="Shop categories">
-          <button
-            className={`button button-secondary shop-category-tab${
-              activeSection === "weapons" ? " is-active" : ""
-            }`}
-            type="button"
-            onClick={() => setActiveSection("weapons")}
-          >
-            Weapons ({sectionCounts.weapons})
-          </button>
-          <button
-            className={`button button-secondary shop-category-tab${
-              activeSection === "drugs" ? " is-active" : ""
-            }`}
-            type="button"
-            onClick={() => setActiveSection("drugs")}
-          >
-            Drugs ({sectionCounts.drugs})
-          </button>
-          <button
-            className={`button button-secondary shop-category-tab${
-              activeSection === "garage" ? " is-active" : ""
-            }`}
-            type="button"
-            onClick={() => setActiveSection("garage")}
-          >
-            Garage ({sectionCounts.garage})
-          </button>
-          <button
-            className={`button button-secondary shop-category-tab${
-              activeSection === "realestate" ? " is-active" : ""
-            }`}
-            type="button"
-            onClick={() => setActiveSection("realestate")}
-          >
-            Real estate ({sectionCounts.realestate})
-          </button>
-        </div>
-      </section>
 
       {isLoading ? (
         <section className="panel">

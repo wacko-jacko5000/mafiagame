@@ -18,6 +18,7 @@ interface StickyMenuConfigRow {
   headerEnabled: boolean;
   headerResourceKeys: unknown;
   primaryItems: unknown;
+  shopItems: unknown;
   moreItems: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -32,12 +33,14 @@ interface StickyMenuConfigDelegate {
       headerEnabled: boolean;
       headerResourceKeys: StickyHeaderResourceKey[];
       primaryItems: StickyMenuDestinationKey[];
+      shopItems: StickyMenuLeafDestinationKey[];
       moreItems: StickyMenuLeafDestinationKey[];
     };
     update: {
       headerEnabled: boolean;
       headerResourceKeys: StickyHeaderResourceKey[];
       primaryItems: StickyMenuDestinationKey[];
+      shopItems: StickyMenuLeafDestinationKey[];
       moreItems: StickyMenuLeafDestinationKey[];
     };
   }): Promise<StickyMenuConfigRow>;
@@ -57,6 +60,7 @@ function toStickyMenuConfigRecord(row: StickyMenuConfigRow): StickyMenuConfigRec
     headerEnabled: row.headerEnabled,
     headerResourceKeys: toStringArray(row.headerResourceKeys) as StickyHeaderResourceKey[],
     primaryItems: toStringArray(row.primaryItems) as StickyMenuDestinationKey[],
+    shopItems: toStringArray(row.shopItems) as StickyMenuLeafDestinationKey[],
     moreItems: toStringArray(row.moreItems) as StickyMenuLeafDestinationKey[],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt
@@ -92,12 +96,14 @@ export class PrismaStickyMenuRepository implements StickyMenuRepository {
         headerEnabled: input.headerEnabled,
         headerResourceKeys: input.headerResourceKeys,
         primaryItems: input.primaryItems,
+        shopItems: input.shopItems,
         moreItems: input.moreItems
       },
       update: {
         headerEnabled: input.headerEnabled,
         headerResourceKeys: input.headerResourceKeys,
         primaryItems: input.primaryItems,
+        shopItems: input.shopItems,
         moreItems: input.moreItems
       }
     });
