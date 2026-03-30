@@ -56,6 +56,8 @@ describe("AchievementsService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });

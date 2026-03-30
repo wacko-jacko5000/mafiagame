@@ -11,4 +11,5 @@ export interface CombatAttackResponseBody {
   targetHealthAfter: number;
   targetHospitalized: boolean;
   hospitalizedUntil: string | null;
+  cashStolen: number;
 }

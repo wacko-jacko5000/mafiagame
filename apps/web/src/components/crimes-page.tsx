@@ -64,7 +64,7 @@ export function CrimesPage() {
       const outcome = await gameApi.crimes.execute(accessToken, crimeId);
       await refreshPlayer();
 
-      setResult(outcome.success ? outcome : null);
+      setResult(outcome);
     } catch (nextError) {
       try {
         await refreshPlayer();
@@ -99,20 +99,44 @@ export function CrimesPage() {
             onClick={(event) => event.stopPropagation()}
           >
             <p className="eyebrow">Outcome</p>
-            <h2>SUCCESS</h2>
+            <h2>{result.success ? "SUCCESS" : "FAILED"}</h2>
             <dl className="stats-grid compact">
               <div>
                 <dt>Crime</dt>
-                <dd>{result.crimeId}</dd>
+                <dd>{crimes.find((c) => c.id === result.crimeId)?.name ?? result.crimeId}</dd>
               </div>
-              <div>
-                <dt>Cash won</dt>
-                <dd>{formatMoney(result.cashAwarded)}</dd>
-              </div>
-              <div>
-                <dt>Respect gained</dt>
-                <dd>{result.respectAwarded}</dd>
-              </div>
+              {result.success ? (
+                <>
+                  <div>
+                    <dt>Cash won</dt>
+                    <dd>{formatMoney(result.cashAwarded)}</dd>
+                  </div>
+                  <div>
+                    <dt>Respect gained</dt>
+                    <dd>{result.respectAwarded}</dd>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <dt>Energy spent</dt>
+                    <dd>{result.energySpent}</dd>
+                  </div>
+                  {result.consequence.type !== "none" && result.consequence.activeUntil ? (
+                    <div>
+                      <dt>Consequence</dt>
+                      <dd>
+                        {result.consequence.type === "jail" ? "Sent to jail" : "Sent to hospital"}{" "}
+                        until{" "}
+                        {new Date(result.consequence.activeUntil).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </dd>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </dl>
             <button className="button" type="button" onClick={() => setResult(null)}>
               Continue
@@ -122,6 +146,41 @@ export function CrimesPage() {
       ) : null}
 
       {error ? <p className="notice notice-error">{error}</p> : null}
+
+      {player ? (
+        <section className="panel">
+          <p className="eyebrow">Heat Level</p>
+          <p className="muted" style={{ marginBottom: "0.5rem" }}>
+            Heat reduces your crime success rate. It builds up with each crime and decays over time.
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <div
+              style={{
+                flex: 1,
+                height: "10px",
+                background: "var(--color-surface-raised, #2a2a2a)",
+                borderRadius: "5px",
+                overflow: "hidden"
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${Math.min(100, player.heat ?? 0)}%`,
+                  background:
+                    (player.heat ?? 0) >= 75
+                      ? "#e53e3e"
+                      : (player.heat ?? 0) >= 40
+                        ? "#dd6b20"
+                        : "#38a169",
+                  transition: "width 0.3s ease"
+                }}
+              />
+            </div>
+            <span style={{ minWidth: "3rem", textAlign: "right" }}>{player.heat ?? 0} / 100</span>
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel">
         <p className="eyebrow">Catalog</p>

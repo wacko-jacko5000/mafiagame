@@ -73,6 +73,8 @@ describe("MarketService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -138,6 +140,8 @@ describe("MarketService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -195,6 +199,8 @@ describe("MarketService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });

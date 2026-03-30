@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l apps/web/src/components/*.tsx)",
+      "Bash(ls \"/c/Users/rober/Claude Mafia Game/apps/web/src/\\(game\\)/\")",
+      "Bash(npx prisma:*)",
+      "Bash(pnpm prisma:*)",
+      "Bash(pnpm --filter api exec prisma migrate dev --name add_heat_to_player)",
+      "Bash(node_modules/.bin/prisma migrate:*)",
+      "Bash(\"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\build\\\\index.js\" migrate dev --name add_heat_to_player)"
+    ]
+  }
+}

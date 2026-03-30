@@ -33,6 +33,8 @@ export function toPlayerResponseBody(
     respectToNextLevel: progression.respectToNextLevel,
     progressPercent: progression.progressPercent,
     energy: player.energy,
+    heat: player.heat,
+    heatUpdatedAt: (player.heatUpdatedAt ?? player.updatedAt).toISOString(),
     health: player.health,
     parkingSlots: assetBonuses.parkingSlots,
     ownedVehicleCount: assetBonuses.ownedVehicleCount,

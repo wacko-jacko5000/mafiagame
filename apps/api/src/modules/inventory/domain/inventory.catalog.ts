@@ -1,5 +1,7 @@
 import { armorCatalog } from "./inventory-armor.catalog";
 import { consumableCatalog } from "./inventory-consumable.catalog";
+import { propertyCatalog } from "./inventory-property.catalog";
+import { vehicleCatalog } from "./inventory-vehicle.catalog";
 import { weaponUnlockCatalog } from "./inventory-weapon-unlock.catalog";
 import type {
   ConsumableItemDefinition,
@@ -15,6 +17,8 @@ import type {
 const defaultShopItemCatalog: readonly ShopItemDefinition[] = [
   ...weaponUnlockCatalog.map(toEquipmentItemDefinition),
   ...armorCatalog.map(toEquipmentItemDefinition),
+  ...vehicleCatalog,
+  ...propertyCatalog,
   ...consumableCatalog
 ] as const;
 

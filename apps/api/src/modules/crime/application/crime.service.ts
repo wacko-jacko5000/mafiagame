@@ -20,6 +20,7 @@ import {
 } from "../domain/crime.errors";
 import { resolveCrimeOutcome } from "../domain/crime.policy";
 import type { CrimeDefinition, CrimeOutcome } from "../domain/crime.types";
+import { playerHeatDecayRules } from "../../player/domain/player.constants";
 import { CRIME_RANDOM_PROVIDER } from "./crime.constants";
 import { CrimeBalanceService } from "./crime-balance.service";
 
@@ -83,12 +84,13 @@ export class CrimeService {
       );
     }
 
-    const outcome = resolveCrimeOutcome(crime, this.getRandomRoll());
+    const outcome = resolveCrimeOutcome(crime, this.getRandomRoll(), player.heat ?? 0);
 
     await this.playerService.applyResourceDelta(playerId, {
       energy: -outcome.energySpent,
       cash: outcome.cashAwarded,
-      respect: outcome.respectAwarded
+      respect: outcome.respectAwarded,
+      heat: playerHeatDecayRules.gainPerCrime
     }, now);
 
     if (outcome.success || crime.failureConsequence.type === "none") {
@@ -100,7 +102,7 @@ export class CrimeService {
       const jailStatusAfterFailure = await this.jailService.jailPlayer(
         playerId,
         crime.failureConsequence.durationSeconds,
-        `Mislukte misdaad: ${crime.name}.`,
+        `Failed crime: ${crime.name}.`,
         now
       );
 
@@ -119,7 +121,7 @@ export class CrimeService {
     const hospitalStatusAfterFailure = await this.hospitalService.hospitalizePlayer(
       playerId,
       crime.failureConsequence.durationSeconds,
-      `Gewond geraakt tijdens misdaad: ${crime.name}.`,
+      `Injured during crime: ${crime.name}.`,
       now
     );
 

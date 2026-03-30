@@ -32,3 +32,16 @@ services:
         value: production
       - key: NEXT_PUBLIC_API_ORIGIN
         value: https://mafiagame-api.onrender.com
+
+  - type: web
+    name: mafiagame-web-neo
+    runtime: node
+    plan: starter
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @mafia-game/web-neo run build
+    startCommand: pnpm --filter @mafia-game/web-neo exec next start -p $PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_ORIGIN
+        value: https://mafiagame-api.onrender.com

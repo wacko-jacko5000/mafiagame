@@ -11,6 +11,13 @@ export const playerEnergyRecoveryRules = {
   recoveryIntervalMs: 60_000
 } as const;
 
+export const playerHeatDecayRules = {
+  maxHeat: 100,
+  gainPerCrime: 4,
+  decayPerInterval: 1,
+  decayIntervalMs: 60_000
+} as const;
+
 export const playerDisplayNameRules = {
   minLength: 3,
   maxLength: 24,

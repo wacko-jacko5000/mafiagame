@@ -301,6 +301,8 @@ describe("TerritoryService", () => {
       cash: 4000,
       respect: 0,
       energy: 100,
+      heat: 0,
+      heatUpdatedAt: new Date("2026-03-17T00:00:00.000Z"),
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,

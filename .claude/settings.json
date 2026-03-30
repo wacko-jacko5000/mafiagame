@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter api run prisma:migrate:dev -- --name add_heat_to_player)",
+      "Bash(pnpm exec:*)",
+      "Bash(pnpm install:*)",
+      "Bash(node \"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\build\\\\index.js\" migrate dev --name add_heat_to_player)",
+      "Bash(NODE_PATH=\"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\build\\\\node_modules;c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\node_modules;c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules;c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\node_modules\" node \"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\build\\\\index.js\" migrate dev --name add_heat_to_player)",
+      "Bash(NODE_PATH=\"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\build\\\\node_modules;c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\node_modules;c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules;c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\node_modules;c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\@prisma+engines@6.19.2\\\\node_modules\" node \"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\node_modules\\\\.pnpm\\\\prisma@6.19.2_typescript@5.9.3\\\\node_modules\\\\prisma\\\\build\\\\index.js\" migrate dev --name add_heat_to_player)",
+      "Bash(docker compose:*)",
+      "Bash(docker start:*)",
+      "Bash(docker exec:*)",
+      "Bash(certutil -hashfile \"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\apps\\\\api\\\\prisma\\\\migrations\\\\20260323120000_add_progression_config_and_admin_roles\\\\migration.sql\" SHA256)",
+      "Bash(pnpm --filter @mafia-game/api build)",
+      "Bash(powershell -File:*)",
+      "Bash(while read:*)",
+      "Bash(do if:*)",
+      "Bash(then echo:*)",
+      "Bash(node -e \":*)",
+      "Bash(pnpm --filter @mafia-game/web build)",
+      "Bash(pnpm --filter @mafia-game/web dev)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(Remove-Item -Force \"c:\\\\Users\\\\rober\\\\Claude Mafia Game\\\\apps\\\\web\\\\.next\\\\trace\" -ErrorAction SilentlyContinue)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(netstat -ano)",
+      "Bash(grep -r \"JWT_SECRET\\\\|SECRET\\\\|jwt\" 'c:/Users/rober/Claude Mafia Game/apps/api/src' --include=*.ts -l)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}

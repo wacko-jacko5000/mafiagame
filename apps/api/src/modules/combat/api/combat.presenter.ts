@@ -16,6 +16,7 @@ export function toCombatAttackResponseBody(
     targetHealthBefore: result.targetHealthBefore,
     targetHealthAfter: result.targetHealthAfter,
     targetHospitalized: result.targetHospitalized,
-    hospitalizedUntil: result.hospitalizedUntil?.toISOString() ?? null
+    hospitalizedUntil: result.hospitalizedUntil?.toISOString() ?? null,
+    cashStolen: result.cashStolen
   };
 }

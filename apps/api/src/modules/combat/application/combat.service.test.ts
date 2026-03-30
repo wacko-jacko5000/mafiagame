@@ -11,7 +11,8 @@ import { DomainEventsService } from "../../../platform/domain-events/domain-even
 
 function createPlayerServiceMock() {
   return {
-    getPlayerById: vi.fn()
+    getPlayerById: vi.fn(),
+    applyResourceDelta: vi.fn()
   } as unknown as PlayerService;
 }
 
@@ -73,6 +74,8 @@ describe("CombatService", () => {
         health: 100,
         jailedUntil: null,
         hospitalizedUntil: null,
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       })
@@ -85,6 +88,8 @@ describe("CombatService", () => {
         health: 100,
         jailedUntil: null,
         hospitalizedUntil: null,
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -156,7 +161,8 @@ describe("CombatService", () => {
       targetArmorItemId: "leather-jacket",
       damageDealt: 17,
       targetHealthAfter: 83,
-      targetHospitalized: false
+      targetHospitalized: false,
+      cashStolen: 0
     });
   });
 
@@ -191,6 +197,8 @@ describe("CombatService", () => {
         health: 100,
         jailedUntil: null,
         hospitalizedUntil: null,
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       })
@@ -203,6 +211,8 @@ describe("CombatService", () => {
         health: 100,
         jailedUntil: null,
         hospitalizedUntil: null,
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -245,6 +255,8 @@ describe("CombatService", () => {
         health: 100,
         jailedUntil: null,
         hospitalizedUntil: null,
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       })
@@ -257,6 +269,8 @@ describe("CombatService", () => {
         health: 7,
         jailedUntil: null,
         hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z"),
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -316,6 +330,8 @@ describe("CombatService", () => {
         health: 100,
         jailedUntil: null,
         hospitalizedUntil: null,
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       })
@@ -328,6 +344,8 @@ describe("CombatService", () => {
         health: 15,
         jailedUntil: null,
         hospitalizedUntil: null,
+        heat: 0,
+        heatUpdatedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -360,6 +378,20 @@ describe("CombatService", () => {
       targetHospitalized: true,
       hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z")
     });
+    vi.mocked(playerService.applyResourceDelta).mockResolvedValue({
+      id: attackerId,
+      displayName: "Attacker",
+      cash: 2875,
+      respect: 0,
+      energy: 100,
+      health: 100,
+      jailedUntil: null,
+      hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
     const service = new CombatService(
       playerService,
@@ -374,13 +406,15 @@ describe("CombatService", () => {
 
     expect(result.targetHospitalized).toBe(true);
     expect(result.hospitalizedUntil?.toISOString()).toBe("2026-03-16T22:10:00.000Z");
+    expect(result.cashStolen).toBe(375);
     expect(domainEventsService.publish).toHaveBeenCalledWith({
       type: "combat.won",
       occurredAt: expect.any(Date),
       attackerPlayerId: attackerId,
       targetPlayerId: targetId,
       damageDealt: 12,
-      hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z")
+      hospitalizedUntil: new Date("2026-03-16T22:10:00.000Z"),
+      cashStolen: 375
     });
   });
 });

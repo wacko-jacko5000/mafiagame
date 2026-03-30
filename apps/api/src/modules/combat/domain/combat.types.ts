@@ -55,4 +55,5 @@ export interface CombatResult {
   targetHealthAfter: number;
   targetHospitalized: boolean;
   hospitalizedUntil: Date | null;
+  cashStolen: number;
 }

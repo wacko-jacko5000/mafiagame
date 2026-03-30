@@ -17,6 +17,8 @@ describe("PrismaPlayerRepository", () => {
           health: 100,
           jailedUntil: null,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           createdAt: now,
           updatedAt: now
         })
@@ -49,6 +51,8 @@ describe("PrismaPlayerRepository", () => {
           health: 100,
           jailedUntil: null,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           createdAt: now,
           updatedAt: now
         }),
@@ -62,6 +66,8 @@ describe("PrismaPlayerRepository", () => {
           health: 100,
           jailedUntil: null,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           createdAt: now,
           updatedAt: now
         })
@@ -100,6 +106,8 @@ describe("PrismaPlayerRepository", () => {
           health: 100,
           jailedUntil: null,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           createdAt: energyUpdatedAt,
           updatedAt: energyUpdatedAt
         }),
@@ -113,6 +121,8 @@ describe("PrismaPlayerRepository", () => {
           health: 100,
           jailedUntil: null,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           createdAt: energyUpdatedAt,
           updatedAt: now
         })
@@ -151,6 +161,8 @@ describe("PrismaPlayerRepository", () => {
           health: 100,
           jailedUntil: now,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           createdAt: now,
           updatedAt: now
         })

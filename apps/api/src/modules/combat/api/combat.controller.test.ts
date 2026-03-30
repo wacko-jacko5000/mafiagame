@@ -48,7 +48,8 @@ describe("CombatController", () => {
       targetHealthBefore: 100,
       targetHealthAfter: 83,
       targetHospitalized: false,
-      hospitalizedUntil: null
+      hospitalizedUntil: null,
+      cashStolen: 0
     });
 
     const response = await request(app.getHttpServer())

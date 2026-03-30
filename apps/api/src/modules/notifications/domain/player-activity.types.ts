@@ -7,7 +7,8 @@ export type PlayerActivityType =
   | "jail.entered"
   | "jail.buyout"
   | "hospital.entered"
-  | "hospital.buyout";
+  | "hospital.buyout"
+  | "combat_attack_won";
 
 export interface PlayerActivitySnapshot {
   id: string;

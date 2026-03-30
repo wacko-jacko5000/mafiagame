@@ -6,7 +6,9 @@ import type {
   CrimeCompletedEvent,
   InventoryItemPurchasedEvent,
   MarketItemSoldEvent,
-  TerritoryDistrictClaimedEvent
+  TerritoryDistrictClaimedEvent,
+  TerritoryPayoutClaimedEvent,
+  TerritoryWarWonEvent
 } from "../../../platform/domain-events/domain-events.types";
 import { AchievementsService } from "./achievements.service";
 
@@ -39,6 +41,12 @@ export class AchievementsProgressEventsHandler
       ),
       this.domainEventsService.subscribe("market.item_sold", (event) =>
         this.handleMarketItemSold(event)
+      ),
+      this.domainEventsService.subscribe("territory.war_won", (event) =>
+        this.handleTerritoryWarWon(event)
+      ),
+      this.domainEventsService.subscribe("territory.payout_claimed", (event) =>
+        this.handleTerritoryPayoutClaimed(event)
       )
     );
   }
@@ -85,6 +93,21 @@ export class AchievementsProgressEventsHandler
     await this.achievementsService.recordProgress(
       event.sellerPlayerId,
       "market_item_sold_count"
+    );
+  }
+
+  private handleTerritoryWarWon(_event: TerritoryWarWonEvent): void {
+    // War won achievements (territory_war_won_count) require a playerId to credit.
+    // The TerritoryWarWonEvent carries gangId only. This will be wired up when
+    // territory war auto-resolution is implemented and a startedByPlayerId is available.
+  }
+
+  private async handleTerritoryPayoutClaimed(
+    event: TerritoryPayoutClaimedEvent
+  ): Promise<void> {
+    await this.achievementsService.recordProgress(
+      event.playerId,
+      "territory_payout_claimed_count"
     );
   }
 }

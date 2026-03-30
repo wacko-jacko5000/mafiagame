@@ -1,5 +1,6 @@
 import {
   playerEnergyRecoveryRules,
+  playerHeatDecayRules,
   playerDisplayNameRules,
   playerFoundationDefaults
 } from "./player.constants";
@@ -94,6 +95,52 @@ export function derivePlayerProgression(respect: number): PlayerProgressionSnaps
     progressPercent: Math.max(
       0,
       Math.min(100, Math.floor((respectEarnedThisLevel / currentLevelSpan) * 100))
+    )
+  };
+}
+
+export interface DecayedHeatState {
+  heat: number;
+  heatUpdatedAt: Date;
+}
+
+export function decayPlayerHeat(
+  player: Pick<PlayerSnapshot, "heat" | "heatUpdatedAt" | "updatedAt">,
+  now: Date
+): DecayedHeatState {
+  const heatUpdatedAt = player.heatUpdatedAt ?? player.updatedAt;
+
+  if (player.heat <= 0) {
+    return {
+      heat: 0,
+      heatUpdatedAt
+    };
+  }
+
+  const elapsedMs = now.getTime() - heatUpdatedAt.getTime();
+  const decayIntervals = Math.floor(elapsedMs / playerHeatDecayRules.decayIntervalMs);
+
+  if (decayIntervals <= 0) {
+    return {
+      heat: player.heat,
+      heatUpdatedAt
+    };
+  }
+
+  const decayedAmount = decayIntervals * playerHeatDecayRules.decayPerInterval;
+  const nextHeat = Math.max(0, player.heat - decayedAmount);
+
+  if (nextHeat <= 0) {
+    return {
+      heat: 0,
+      heatUpdatedAt: now
+    };
+  }
+
+  return {
+    heat: nextHeat,
+    heatUpdatedAt: new Date(
+      heatUpdatedAt.getTime() + decayIntervals * playerHeatDecayRules.decayIntervalMs
     )
   };
 }

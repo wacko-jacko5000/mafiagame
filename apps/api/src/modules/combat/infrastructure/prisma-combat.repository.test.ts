@@ -10,6 +10,8 @@ describe("PrismaCombatRepository", () => {
           id: "target-1",
           health: 15,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           hospitalEntryCount: 0
         }),
         update: vi.fn().mockResolvedValue({
@@ -49,6 +51,8 @@ describe("PrismaCombatRepository", () => {
           id: "target-1",
           health: 5,
           hospitalizedUntil: null,
+          heat: 0,
+          heatUpdatedAt: new Date(),
           hospitalEntryCount: 0
         }),
         update: vi.fn().mockResolvedValue({

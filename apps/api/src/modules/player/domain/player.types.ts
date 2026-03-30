@@ -8,6 +8,8 @@ export interface PlayerSnapshot {
   respect: number;
   energy: number;
   energyUpdatedAt?: Date;
+  heat: number;
+  heatUpdatedAt?: Date;
   health: number;
   jailedUntil: Date | null;
   hospitalizedUntil: Date | null;
@@ -42,6 +44,7 @@ export interface PlayerResourceDelta {
   cash?: number;
   respect?: number;
   energy?: number;
+  heat?: number;
   health?: number;
 }
 

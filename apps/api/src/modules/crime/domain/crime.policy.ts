@@ -2,9 +2,12 @@ import type { CrimeDefinition, CrimeOutcome } from "./crime.types";
 
 export function resolveCrimeOutcome(
   crime: CrimeDefinition,
-  successRoll: number
+  successRoll: number,
+  heat = 0
 ): CrimeOutcome {
-  const success = successRoll <= crime.successRate;
+  const heatMultiplier = Math.max(0.4, 1 - heat * 0.008);
+  const effectiveSuccessRate = crime.successRate * heatMultiplier;
+  const success = successRoll <= effectiveSuccessRate;
 
   if (!success) {
     return {

@@ -3,6 +3,8 @@ export type AchievementTriggerType =
   | "inventory_item_purchased_count"
   | "combat_won_count"
   | "territory_district_claimed_count"
+  | "territory_war_won_count"
+  | "territory_payout_claimed_count"
   | "market_item_sold_count";
 
 export interface AchievementDefinition {

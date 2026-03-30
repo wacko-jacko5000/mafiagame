@@ -38,7 +38,8 @@ describe("MissionsProgressEventsHandler", () => {
       attackerPlayerId: "player-3",
       targetPlayerId: "player-4",
       damageDealt: 17,
-      hospitalizedUntil: new Date("2026-03-18T10:12:00.000Z")
+      hospitalizedUntil: new Date("2026-03-18T10:12:00.000Z"),
+      cashStolen: 375
     });
     await domainEventsService.publish({
       type: "territory.district_claimed",

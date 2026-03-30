@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "players" ADD COLUMN     "heat" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "heatUpdatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "sticky_menu_configs" ALTER COLUMN "shopItems" DROP DEFAULT;

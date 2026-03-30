@@ -3,10 +3,11 @@ import type { Player } from "@prisma/client";
 
 import { PrismaService } from "../../../platform/database/prisma.service";
 import { InvalidPlayerResourceDeltaError } from "../domain/player.errors";
-import { playerEnergyRecoveryRules } from "../domain/player.constants";
+import { playerEnergyRecoveryRules, playerHeatDecayRules } from "../domain/player.constants";
 import {
   derivePlayerProgression,
-  regeneratePlayerEnergy
+  regeneratePlayerEnergy,
+  decayPlayerHeat
 } from "../domain/player.policy";
 import type {
   PlayerCustodyBuyoutInput,
@@ -35,6 +36,8 @@ function toPlayerSnapshot(player: Player): PlayerSnapshot {
     respect: player.respect,
     energy: player.energy,
     energyUpdatedAt: player.energyUpdatedAt,
+    heat: player.heat,
+    heatUpdatedAt: player.heatUpdatedAt,
     health: player.health,
     jailedUntil: player.jailedUntil,
     hospitalizedUntil: player.hospitalizedUntil,
@@ -76,7 +79,7 @@ export class PrismaPlayerRepository implements PlayerRepository {
 
       const syncedPlayer = await this.synchronizeCustody(
         tx,
-        await this.synchronizeEnergy(tx, player, now),
+        await this.synchronizeHeat(tx, await this.synchronizeEnergy(tx, player, now), now),
         now
       );
       return toPlayerSnapshot(syncedPlayer);
@@ -121,7 +124,7 @@ export class PrismaPlayerRepository implements PlayerRepository {
 
       const syncedPlayer = await this.synchronizeCustody(
         tx,
-        await this.synchronizeEnergy(tx, player, now),
+        await this.synchronizeHeat(tx, await this.synchronizeEnergy(tx, player, now), now),
         now
       );
       const previousLevel = derivePlayerProgression(syncedPlayer.respect).level;
@@ -131,6 +134,10 @@ export class PrismaPlayerRepository implements PlayerRepository {
         energy: Math.min(
           playerEnergyRecoveryRules.maxEnergy,
           syncedPlayer.energy + (delta.energy ?? 0)
+        ),
+        heat: Math.min(
+          playerHeatDecayRules.maxHeat,
+          Math.max(0, (syncedPlayer.heat ?? 0) + (delta.heat ?? 0))
         ),
         health: syncedPlayer.health + (delta.health ?? 0)
       };
@@ -161,7 +168,9 @@ export class PrismaPlayerRepository implements PlayerRepository {
               }
             : {}),
           energyUpdatedAt:
-            delta.energy === undefined ? syncedPlayer.energyUpdatedAt : now
+            delta.energy === undefined ? syncedPlayer.energyUpdatedAt : now,
+          heatUpdatedAt:
+            delta.heat === undefined ? syncedPlayer.heatUpdatedAt : now
         }
       });
 
@@ -299,6 +308,31 @@ export class PrismaPlayerRepository implements PlayerRepository {
       data: {
         energy: regeneratedEnergy.energy,
         energyUpdatedAt: regeneratedEnergy.energyUpdatedAt
+      }
+    });
+  }
+
+  private async synchronizeHeat(
+    tx: PlayerPersistenceClient,
+    player: Player,
+    now: Date
+  ): Promise<Player> {
+    const decayed = decayPlayerHeat(player, now);
+    const needsHeatSync =
+      decayed.heat !== player.heat ||
+      decayed.heatUpdatedAt.getTime() !== player.heatUpdatedAt.getTime();
+
+    if (!needsHeatSync) {
+      return player;
+    }
+
+    return tx.player.update({
+      where: {
+        id: player.id
+      },
+      data: {
+        heat: decayed.heat,
+        heatUpdatedAt: decayed.heatUpdatedAt
       }
     });
   }

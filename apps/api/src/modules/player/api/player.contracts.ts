@@ -18,6 +18,8 @@ export interface PlayerResponseBody {
   respectToNextLevel: number | null;
   progressPercent: number;
   energy: number;
+  heat: number;
+  heatUpdatedAt: string;
   health: number;
   parkingSlots: number;
   ownedVehicleCount: number;

@@ -38,6 +38,8 @@ describe("HospitalService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: new Date("2026-03-16T20:08:00.000Z"),
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -73,6 +75,8 @@ describe("HospitalService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: new Date("2026-03-16T20:08:00.000Z"),
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -107,6 +111,8 @@ describe("HospitalService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: new Date("2026-03-16T20:08:00.000Z"),
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });

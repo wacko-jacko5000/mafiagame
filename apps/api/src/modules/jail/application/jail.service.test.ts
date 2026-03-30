@@ -38,6 +38,8 @@ describe("JailService", () => {
       health: 100,
       jailedUntil: new Date("2026-03-16T20:05:00.000Z"),
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -73,6 +75,8 @@ describe("JailService", () => {
       health: 100,
       jailedUntil: new Date("2026-03-16T20:05:00.000Z"),
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -107,6 +111,8 @@ describe("JailService", () => {
       health: 100,
       jailedUntil: new Date("2026-03-16T20:05:00.000Z"),
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });

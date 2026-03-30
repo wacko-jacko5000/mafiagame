@@ -15,6 +15,8 @@ model Player {
   respect           Int
   energy            Int
   energyUpdatedAt   DateTime  @default(now())
+  heat              Int       @default(0)
+  heatUpdatedAt     DateTime  @default(now())
   health            Int
   jailedUntil       DateTime?
   hospitalizedUntil DateTime?
@@ -41,18 +43,57 @@ model Player {
   @@map("players")
 }
 
+enum AdminRole {
+  super_admin
+  balance_admin
+}
+
+enum ProgressionConfigStatus {
+  draft
+  published
+  scheduled
+  archived
+}
+
 model Account {
   id           String           @id @default(uuid()) @db.Uuid
   email        String           @unique @db.VarChar(320)
   passwordHash String           @db.VarChar(255)
   isAdmin      Boolean          @default(false)
+  adminRole    AdminRole?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   player       Player?
   sessions     AccountSession[]
   balanceChanges BalanceChangeLog[]
+  createdProgressionConfigs  ProgressionConfig[] @relation("ProgressionConfigCreator")
+  updatedProgressionConfigs  ProgressionConfig[] @relation("ProgressionConfigUpdater")
+  publishedProgressionConfigs ProgressionConfig[] @relation("ProgressionConfigPublisher")
 
   @@map("accounts")
+}
+
+model ProgressionConfig {
+  id                   String                  @id @default(uuid()) @db.Uuid
+  version              Int                     @unique
+  status               ProgressionConfigStatus
+  payload              Json
+  scheduledFor         DateTime?
+  publishedAt          DateTime?
+  archivedAt           DateTime?
+  createdByAccountId   String?                 @db.Uuid
+  updatedByAccountId   String?                 @db.Uuid
+  publishedByAccountId String?                 @db.Uuid
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @default(now()) @updatedAt
+  createdBy            Account?                @relation("ProgressionConfigCreator", fields: [createdByAccountId], references: [id], onDelete: SetNull)
+  updatedBy            Account?                @relation("ProgressionConfigUpdater", fields: [updatedByAccountId], references: [id], onDelete: SetNull)
+  publishedBy          Account?                @relation("ProgressionConfigPublisher", fields: [publishedByAccountId], references: [id], onDelete: SetNull)
+
+  @@index([publishedAt])
+  @@index([scheduledFor])
+  @@index([status, createdAt])
+  @@map("progression_configs")
 }
 
 model AccountSession {

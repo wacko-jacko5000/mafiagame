@@ -111,21 +111,49 @@ export class CombatService {
       throw new NotFoundException(new PlayerNotFoundError(targetId).message);
     }
 
+    let cashStolen = 0;
+
     if (persistenceResult.targetHospitalized) {
-      await this.playerActivityService.createActivity({
-        playerId: targetId,
-        type: "hospital.entered",
-        title: "You are in the hospital",
-        createdAt: now,
-        body: `Taken down by ${attacker.displayName}. Recovery lasts until ${persistenceResult.hospitalizedUntil?.toISOString()}.`
-      });
+      cashStolen = Math.floor(target.cash * combatRuleSet.cashStealPercent);
+
+      if (cashStolen > 0) {
+        await Promise.all([
+          this.playerService.applyResourceDelta(attackerId, { cash: cashStolen }),
+          this.playerService.applyResourceDelta(targetId, { cash: -cashStolen })
+        ]);
+      }
+
+      await Promise.all([
+        this.playerActivityService.createActivity({
+          playerId: targetId,
+          type: "hospital.entered",
+          title: "You are in the hospital",
+          createdAt: now,
+          body:
+            cashStolen > 0
+              ? `Taken down by ${attacker.displayName}. They stole ${formatCash(cashStolen)} from you.`
+              : `Taken down by ${attacker.displayName}. Recovery lasts until ${persistenceResult.hospitalizedUntil?.toISOString()}.`
+        }),
+        this.playerActivityService.createActivity({
+          playerId: attackerId,
+          type: "combat_attack_won",
+          title: "You won a fight",
+          createdAt: now,
+          body:
+            cashStolen > 0
+              ? `You hospitalized ${target.displayName} and stole ${formatCash(cashStolen)}.`
+              : `You hospitalized ${target.displayName}.`
+        })
+      ]);
+
       await this.domainEventsService.publish({
         type: "combat.won",
         occurredAt: now,
         attackerPlayerId: attackerId,
         targetPlayerId: targetId,
         damageDealt: combatResolution.damageDealt,
-        hospitalizedUntil: persistenceResult.hospitalizedUntil
+        hospitalizedUntil: persistenceResult.hospitalizedUntil,
+        cashStolen
       });
     }
 
@@ -141,7 +169,12 @@ export class CombatService {
       targetHealthBefore: persistenceResult.targetHealthBefore,
       targetHealthAfter: persistenceResult.targetHealthAfter,
       targetHospitalized: persistenceResult.targetHospitalized,
-      hospitalizedUntil: persistenceResult.hospitalizedUntil
+      hospitalizedUntil: persistenceResult.hospitalizedUntil,
+      cashStolen
     };
   }
+}
+
+function formatCash(value: number): string {
+  return `$${value.toLocaleString("en-US")}`;
 }

@@ -64,6 +64,8 @@ describe("PlayerController", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: now,
       createdAt: now,
       updatedAt: now
     });
@@ -107,6 +109,8 @@ describe("PlayerController", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: now,
       createdAt: now,
       updatedAt: now
     });
@@ -136,6 +140,8 @@ describe("PlayerController", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: now,
       createdAt: now,
       updatedAt: now
     });
@@ -185,6 +191,8 @@ describe("PlayerController", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date("2026-03-16T20:00:00.000Z"),
       createdAt: new Date("2026-03-16T20:00:00.000Z"),
       updatedAt: new Date("2026-03-16T20:00:00.000Z")
     });

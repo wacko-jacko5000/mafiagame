@@ -30,6 +30,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -60,6 +62,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -86,6 +90,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -113,6 +119,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -147,6 +155,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -184,6 +194,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date("2026-03-19T19:00:00.000Z"),
       createdAt: new Date("2026-03-19T19:00:00.000Z"),
       updatedAt: new Date("2026-03-19T19:00:00.000Z")
     });
@@ -209,6 +221,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -239,6 +253,8 @@ describe("PlayerService", () => {
       health: 100,
       jailedUntil: null,
       hospitalizedUntil: null,
+      heat: 0,
+      heatUpdatedAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date()
     });

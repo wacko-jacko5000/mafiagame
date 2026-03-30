@@ -25,6 +25,7 @@ export interface CombatWonEvent {
   targetPlayerId: string;
   damageDealt: number;
   hospitalizedUntil: Date | null;
+  cashStolen: number;
 }
 
 export interface TerritoryDistrictClaimedEvent {
